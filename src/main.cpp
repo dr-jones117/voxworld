@@ -26,7 +26,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
  
- 
+
 int main(void)
 {
 #if SHOW_CWD
@@ -72,14 +72,16 @@ int main(void)
 
     glfwSwapInterval(1);
 
-    float positions[12] = {
-        -0.5f,  -0.5f, 
-         0.5f,  -0.5f, 
-         0.5f,   0.5f,
+    float positions[8] = {
+        -0.5f, -0.5f, // 0
+         0.5f, -0.5f, // 1
+         0.5f,  0.5f, // 2
+        -0.5f,  0.5f, // 3
+    };
 
-         0.5f,  0.5f, 
-         -0.5f,  0.5f, 
-         -0.5f,  -0.5f
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
     };
 
     unsigned int vao;
@@ -89,13 +91,17 @@ int main(void)
     unsigned int buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
- 
+    glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 
+    unsigned int ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+ 
     ShaderProgramSource source = ParseShader("../res/shaders/Basic.shader");
-
     unsigned int shader = CreateShader(source.vertexShader, source.fragmentShader);
 
     std::cout << source.vertexShader << std::endl;
@@ -107,7 +113,7 @@ int main(void)
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
  
         glfwSwapBuffers(window);
         glfwPollEvents();
