@@ -1,3 +1,53 @@
-/build/
-/lib
+# Ignore build directories
+build/
+bin/
+out/
+lib/
 
+# Ignore CMake build files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore compiled object files and libraries
+*.o
+*.obj
+*.so
+*.dylib
+*.lib
+*.a
+*.dll
+*.exe
+
+# Ignore glfw and other external libraries you might include
+# (Assuming you might have external dependencies in a folder)
+external/
+
+# Ignore generated files from the IDE
+*.log
+*.swp
+*.swo
+*.swn
+*.tmp
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Linux system files
+*.lock
+*~
+
+# Ignore Windows system files
+Thumbs.db
+desktop.ini
+
+# Ignore Visual Studio Code workspace settings
+.vscode/
+
+# Ignore JetBrains IDE settings (CLion, etc.)
+.idea/
+*.iml
+
+# Ignore CLion cmake-specific files
+.cmake/
