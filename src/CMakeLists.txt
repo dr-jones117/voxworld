@@ -1,4 +1,4 @@
-add_executable(voxwrld main.cpp)
+add_executable(voxwrld main.cpp shader.cpp)
 
 set_target_properties(voxwrld PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build
