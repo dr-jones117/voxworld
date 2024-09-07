@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
+#include <math.h>
 
 #include "shader.h"
 #include "glError.h"
@@ -23,6 +24,11 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+{
+    GLCall(glViewport(0, 0, width, height));
 }
 
 int main(void)
@@ -61,6 +67,7 @@ int main(void)
     glViewport(0, 0, width, height);
 
     glfwSetKeyCallback(window, key_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -74,13 +81,47 @@ int main(void)
     // std::cout << glGetString(GL_VERSION) << std::endl;
 
     float positions[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.5f, 0.5f, 0.0f,
+        -0.5f,
+        -0.5f,
+        0.0f,
 
-        -0.7f, -0.7f, 0.0f,
-        -0.5f, -0.7f, 0.0f,
-        -0.6f, 0.7f, 0.0f};
+        0.5f,
+        0.2f,
+        0.2f,
+
+        0.5f,
+        -0.5f,
+        0.0f,
+
+        0.0f,
+        1.0f,
+        0.0f,
+        0.5f,
+        0.5f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+
+        -0.7f,
+        -0.7f,
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,
+        -0.5f,
+        -0.7f,
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        -0.6f,
+        0.7f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+    };
 
     unsigned int indices[] = {
         0, 1, 2,
@@ -95,33 +136,50 @@ int main(void)
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
     GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
 
+    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)0));
     GLCall(glEnableVertexAttribArray(0));
-    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0));
+
+    GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)(3 * sizeof(float))));
+    GLCall(glEnableVertexAttribArray(1));
 
     unsigned int EBO;
     GLCall(glGenBuffers(1, &EBO));
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
-    ShaderProgramSource source = ParseShader("../res/shaders/Basic.shader");
-    unsigned int shader = CreateShader(source.vertexShader, source.fragmentShader);
+    ShaderProgramSource blueShaderSource = ParseShader("../res/shaders/Blue.shader");
+    unsigned int blueShader = CreateShader(blueShaderSource.vertexShader, blueShaderSource.fragmentShader);
+
+    ShaderProgramSource uniformShaderSource = ParseShader("../res/shaders/UniformTest.shader");
+    unsigned int uniformShader = CreateShader(uniformShaderSource.vertexShader, uniformShaderSource.fragmentShader);
 
     while (!glfwWindowShouldClose(window))
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+        float timeValue = glfwGetTime();
+        float redValue = (sin(timeValue) / 2.0f) + 0.5f;
+        int vertexColorLocation = glGetUniformLocation(uniformShader, "red");
+        glUseProgram(uniformShader);
+        glUniform1f(vertexColorLocation, redValue); // need to call use program before this so it assigns the value to the correct shader
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
         GLCall(glClearColor(0.0f, 0.9f, 1.0f, 1.0f));
 
-        GLCall(glUseProgram(shader));
+        GLCall(glUseProgram(blueShader));
+        int blueOffset = glGetUniformLocation(blueShader, "offset");
+        glUniform1f(blueOffset, redValue > 1.0f ? 1.0f : redValue);
 
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+        GLCall(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)0));
+
+        GLCall(glUseProgram(uniformShader));
+        GLCall(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)(3 * sizeof(unsigned int))));
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteProgram(shader);
+    glDeleteProgram(blueShader);
 
     glfwDestroyWindow(window);
 

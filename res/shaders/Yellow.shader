@@ -5,7 +5,7 @@ layout(location = 0) in vec3 uPos;
 
 void main()
 {
-    gl_Position = (uPos.x, uPos.y, uPos.z, 1.0f);
+    gl_Position = vec4(uPos.x, uPos.y, uPos.z, 1.0f);
 };
 
 #shader fragment
@@ -15,5 +15,5 @@ layout(location = 0) out vec4 FragColor;
 
 void main()
 {
-    FragColor = (0.5f, 0.5f, 0.7f, 1.0f);
+    FragColor = vec4(0.9f, 0.9f, 0.1f, 1.0f);
 };
