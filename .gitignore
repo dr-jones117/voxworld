@@ -2,7 +2,6 @@
 build/
 bin/
 out/
-lib/
 
 # Ignore CMake build files
 CMakeFiles/
