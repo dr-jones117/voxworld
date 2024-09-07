@@ -71,18 +71,20 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    std::cout << glGetString(GL_VERSION) << std::endl;
+    // std::cout << glGetString(GL_VERSION) << std::endl;
 
-    float positions[8] = {
-        -0.5f, -0.5f, // 0
-        0.5f, -0.5f,  // 1
-        0.5f, 0.5f,   // 2
-        -0.5f, 0.5f,  // 3
-    };
+    float positions[] = {
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.5f, 0.5f, 0.0f,
+
+        -0.7f, -0.7f, 0.0f,
+        -0.5f, -0.7f, 0.0f,
+        -0.6f, 0.7f, 0.0f};
 
     unsigned int indices[] = {
         0, 1, 2,
-        2, 3, 0};
+        3, 4, 5};
 
     unsigned int VAO;
     GLCall(glGenVertexArrays(1, &VAO));
@@ -94,7 +96,7 @@ int main(void)
     GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
 
     GLCall(glEnableVertexAttribArray(0));
-    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
+    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0));
 
     unsigned int EBO;
     GLCall(glGenBuffers(1, &EBO));
@@ -104,29 +106,14 @@ int main(void)
     ShaderProgramSource source = ParseShader("../res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.vertexShader, source.fragmentShader);
 
-    float r = 0.0f;
-    float increment = 0.01f;
-
     while (!glfwWindowShouldClose(window))
     {
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // default
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
-        if (r >= 1.0f)
-        {
-            increment = -0.01f;
-        }
-        else if (r <= 0.0f)
-        {
-            increment = 0.01f;
-        }
-
-        r += increment;
+        GLCall(glClearColor(0.0f, 0.9f, 1.0f, 1.0f));
 
         GLCall(glUseProgram(shader));
-        int location = glGetUniformLocation(shader, "u_Color");
-        GLCall(glUniform4f(location, r, 1.0f, 0.0f, 0.5f));
 
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
