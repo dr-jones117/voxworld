@@ -1,11 +1,13 @@
-#include "shader.h"
-#include "glError.h"
+#include <GL/glew.h>
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
-ShaderProgramSource ParseShader(const std::string &filepath)
+#include "shader.h"
+#include "glError.h"
+
+ShaderProgramSource Shader::ParseShader(const std::string &filepath)
 {
     enum class ShaderType
     {
@@ -47,7 +49,7 @@ ShaderProgramSource ParseShader(const std::string &filepath)
     return {ss[0].str(), ss[1].str()};
 }
 
-unsigned int CompileShader(unsigned int type, const std::string &source)
+unsigned int Shader::CompileShader(unsigned int type, const std::string &source)
 {
     unsigned int id = glCreateShader(type);
     const char *src = source.c_str();
@@ -74,7 +76,7 @@ unsigned int CompileShader(unsigned int type, const std::string &source)
     return id;
 }
 
-unsigned int CreateShader(const std::string &vertexShader, const std::string &fragmentShader)
+unsigned int Shader::CreateShader(const std::string &vertexShader, const std::string &fragmentShader)
 {
     unsigned int program = glCreateProgram();
     unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
@@ -90,4 +92,20 @@ unsigned int CreateShader(const std::string &vertexShader, const std::string &fr
     GLCall(glDeleteShader(fs));
 
     return program;
+}
+
+Shader::Shader(std::string filepath)
+{
+    ShaderProgramSource programSource = ParseShader(filepath);
+    Id = CreateShader(programSource.vertexShader, programSource.fragmentShader);
+}
+
+void Shader::useProgram()
+{
+    GLCall(glUseProgram(Id));
+}
+
+void Shader::deleteProgram()
+{
+    GLCall(glDeleteProgram(Id));
 }

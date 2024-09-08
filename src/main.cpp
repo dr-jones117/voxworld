@@ -12,8 +12,7 @@
 
 #include "shader.h"
 #include "glError.h"
-
-#define SHOW_CWD false
+#include "texture.h"
 
 static void error_callback(int error, const char *description)
 {
@@ -33,18 +32,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 int main(void)
 {
-#if SHOW_CWD
-    char cwd[PATH_MAX];
-    if (getcwd(cwd, sizeof(cwd)) != nullptr)
-    {
-        std::cout << "Current working directory: " << cwd << std::endl;
-    }
-    else
-    {
-        perror("getcwd() error");
-    }
-#endif
-
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())
@@ -62,10 +49,6 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-
     glfwSetKeyCallback(window, key_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwMakeContextCurrent(window);
@@ -78,54 +61,17 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    // std::cout << glGetString(GL_VERSION) << std::endl;
-
-    float positions[] = {
-        -0.5f,
-        -0.5f,
-        0.0f,
-
-        0.5f,
-        0.2f,
-        0.2f,
-
-        0.5f,
-        -0.5f,
-        0.0f,
-
-        0.0f,
-        1.0f,
-        0.0f,
-        0.5f,
-        0.5f,
-        0.0f,
-        0.0f,
-        0.0f,
-        1.0f,
-
-        -0.7f,
-        -0.7f,
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f,
-        -0.5f,
-        -0.7f,
-        0.0f,
-        0.0f,
-        1.0f,
-        0.0f,
-        -0.6f,
-        0.7f,
-        0.0f,
-        0.0f,
-        0.0f,
-        1.0f,
+    float vertices[] = {
+        // positions      // colors         // texture coords
+        0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // top right
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+        -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f   // top left
     };
 
     unsigned int indices[] = {
         0, 1, 2,
-        3, 4, 5};
+        2, 3, 0};
 
     unsigned int VAO;
     GLCall(glGenVertexArrays(1, &VAO));
@@ -134,52 +80,42 @@ int main(void)
     unsigned int VBO;
     GLCall(glGenBuffers(1, &VBO));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
-    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 
-    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)0));
+    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)0));
     GLCall(glEnableVertexAttribArray(0));
 
-    GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void *)(3 * sizeof(float))));
+    GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void *)(3 * sizeof(float))));
     GLCall(glEnableVertexAttribArray(1));
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     unsigned int EBO;
     GLCall(glGenBuffers(1, &EBO));
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
-    ShaderProgramSource blueShaderSource = ParseShader("../res/shaders/Blue.shader");
-    unsigned int blueShader = CreateShader(blueShaderSource.vertexShader, blueShaderSource.fragmentShader);
-
-    ShaderProgramSource uniformShaderSource = ParseShader("../res/shaders/UniformTest.shader");
-    unsigned int uniformShader = CreateShader(uniformShaderSource.vertexShader, uniformShaderSource.fragmentShader);
+    Shader shader = Shader("../res/shaders/Blue.shader");
+    Texture grassTexture = Texture("../res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
 
     while (!glfwWindowShouldClose(window))
     {
-        float timeValue = glfwGetTime();
-        float redValue = (sin(timeValue) / 2.0f) + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(uniformShader, "red");
-        glUseProgram(uniformShader);
-        glUniform1f(vertexColorLocation, redValue); // need to call use program before this so it assigns the value to the correct shader
-
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
-        GLCall(glClearColor(0.0f, 0.9f, 1.0f, 1.0f));
+        GLCall(glClearColor(0.2f, 0.55f, 1.0f, 1.0f));
 
-        GLCall(glUseProgram(blueShader));
-        int blueOffset = glGetUniformLocation(blueShader, "offset");
-        glUniform1f(blueOffset, redValue > 1.0f ? 1.0f : redValue);
-
-        GLCall(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)0));
-
-        GLCall(glUseProgram(uniformShader));
-        GLCall(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)(3 * sizeof(unsigned int))));
+        shader.useProgram();
+        grassTexture.bind();
+        GLCall(glBindVertexArray(VAO));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteProgram(blueShader);
+    shader.deleteProgram();
 
     glfwDestroyWindow(window);
 
