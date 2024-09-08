@@ -14,6 +14,10 @@
 #include "glError.h"
 #include "texture.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 static void error_callback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -41,7 +45,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "OpenGL Triangle", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "OpenGL Triangle", nullptr, nullptr);
     if (!window)
     {
         fprintf(stderr, "error while initializing window\n");
@@ -96,6 +100,8 @@ int main(void)
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
+    glm::mat4 trans = glm::mat4(1.0f);
+
     Shader shader = Shader("../res/shaders/Blue.shader");
     Texture grassTexture = Texture("../res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
 
@@ -107,8 +113,23 @@ int main(void)
         GLCall(glClearColor(0.2f, 0.55f, 1.0f, 1.0f));
 
         shader.useProgram();
+
+        trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        unsigned int transformLoc = glGetUniformLocation(shader.Id, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
         grassTexture.bind();
         GLCall(glBindVertexArray(VAO));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+
+        trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
         glfwSwapBuffers(window);
