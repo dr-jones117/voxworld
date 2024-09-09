@@ -7,7 +7,7 @@
 #include <vector>
 
 #define CHUNK_SIZE 12
-#define CHUNK_HEIGHT 12
+#define CHUNK_HEIGHT 32
 extern int render_distance;
 
 const siv::PerlinNoise::seed_type seed = 123456u;

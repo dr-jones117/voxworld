@@ -17,22 +17,25 @@ Chunk *generateChunk(glm::ivec3 currPos)
 {
     Chunk *chunk = new Chunk();
     chunk->pos = glm::vec3((float)currPos.x, (float)currPos.y, (float)currPos.z);
-    // std::cout << "generating chunk: (" << currPos.x << ", " << currPos.y << ", " << currPos.z << ")" << std::endl;
 
-    for (int i = 0; i < CHUNK_SIZE; i++)
+    for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
     {
-        for (int j = 0; j < CHUNK_HEIGHT; j++)
+        for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
-            for (int k = 0; k < CHUNK_SIZE; k++)
+            double freq = 0.01;
+            double noise = perlin.octave2D_01(freq * (currPos.x * CHUNK_SIZE + i), freq * (currPos.z * CHUNK_SIZE + k), 8);
+
+            int terrainHeight = (int)(noise * CHUNK_HEIGHT);
+
+            for (int j = 0; j < CHUNK_HEIGHT; j++) // Y-axis
             {
-                const double noise = perlin.octave2D_01(currPos.x + (i * 0.01), currPos.z + (k * 0.01), 4);
-                if (noise < 0.65)
+                if (j < terrainHeight)
                 {
-                    chunk->data[i * j * k] = (BLOCK_TYPE)AIR_BLOCK;
+                    chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] = (BLOCK_TYPE)GRASS_BLOCK;
                 }
                 else
                 {
-                    chunk->data[i * j * k] = (BLOCK_TYPE)GRASS_BLOCK;
+                    chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] = (BLOCK_TYPE)AIR_BLOCK;
                 }
             }
         }
@@ -49,12 +52,12 @@ void renderChunk(Chunk *chunk, Shader *shader)
         {
             for (int k = 0; k < CHUNK_SIZE; k++)
             {
-                if (chunk->data[i * j * k] == (BLOCK_TYPE)AIR_BLOCK)
+                if (chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] == (BLOCK_TYPE)AIR_BLOCK)
                     continue;
 
-                Texture *botT = textures[chunk->data[i * j * k] + BOTTOM_TEXTURE];
-                Texture *sideT = textures[chunk->data[i * j * k] + SIDE_TEXTURE];
-                Texture *topT = textures[chunk->data[i * j * k] + TOP_TEXTURE];
+                Texture *botT = textures[chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] + BOTTOM_TEXTURE];
+                Texture *sideT = textures[chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] + SIDE_TEXTURE];
+                Texture *topT = textures[chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] + TOP_TEXTURE];
 
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3((chunk->pos.x * (float)CHUNK_SIZE) + (float)i,
