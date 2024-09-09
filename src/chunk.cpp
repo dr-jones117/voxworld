@@ -57,3 +57,20 @@ void renderChunk(Chunk *chunk, Shader *shader)
         }
     }
 }
+
+void generateChunks(glm::ivec3 currPos, std::vector<Chunk *> &chunks)
+{
+    chunks.push_back(generateChunk(glm::vec3(0.0f, 0.0f, 0.0f)));
+    for (int i = 0; i < RENDER_DISTANCE; i++)
+    {
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, 0, (float)i * CHUNK_SIZE - CHUNK_SIZE)));
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, 0, (float)i * CHUNK_SIZE + CHUNK_SIZE)));
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE - CHUNK_SIZE, (float)i * CHUNK_SIZE, 0)));
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE + CHUNK_SIZE, (float)i * CHUNK_SIZE, 0)));
+
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE - CHUNK_SIZE, 0, (float)i * CHUNK_SIZE - CHUNK_SIZE)));
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE + CHUNK_SIZE, 0, (float)i * CHUNK_SIZE + CHUNK_SIZE)));
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE - CHUNK_SIZE, (float)i * CHUNK_SIZE, 0 + CHUNK_SIZE)));
+        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE + CHUNK_SIZE, (float)i * CHUNK_SIZE, 0 - CHUNK_SIZE)));
+    }
+}

@@ -24,8 +24,6 @@
 
 #include <chrono>
 
-#define RENDER_DISTANCE 1
-
 int screenWidth = 1280, screenHeight = 720;
 Player *player = new Player();
 
@@ -218,16 +216,9 @@ int main(void)
     float fps = 0.0f;
 
     generateTextures();
+
     std::vector<Chunk *> chunks;
-    glm::vec3 chunkPos = player->getChunkPos();
-    chunks.push_back(generateChunk(glm::vec3(0.0f, 0.0f, 0.0f)));
-    for (int i = 0; i < RENDER_DISTANCE; i++)
-    {
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, 0, (float)i * CHUNK_SIZE - CHUNK_SIZE)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, 0, (float)i * CHUNK_SIZE + CHUNK_SIZE)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE - CHUNK_SIZE, (float)i * CHUNK_SIZE, 0)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE + CHUNK_SIZE, (float)i * CHUNK_SIZE, 0)));
-    }
+    generateChunks(player->getChunkPos(), chunks);
 
     while (!glfwWindowShouldClose(window))
     {
