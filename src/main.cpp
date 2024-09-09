@@ -217,12 +217,11 @@ int main(void)
 
     generateTextures();
 
-    std::vector<Chunk *> chunks;
-    generateChunks(player->getChunkPos(), chunks);
-
+    ChunkMap chunkMap;
     while (!glfwWindowShouldClose(window))
     {
         frameCount++;
+        generateChunks(player->getChunkPos(), chunkMap);
         processInput(window);
         player->tick(glfwGetTime());
 
@@ -243,9 +242,9 @@ int main(void)
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
         GLCall(glBindVertexArray(VAO));
-        for (const auto &chunk : chunks)
+        for (const auto &pair : chunkMap)
         {
-            renderChunk(chunk, &shader);
+            renderChunk(pair.second, &shader);
         }
 
         glfwSwapBuffers(window);

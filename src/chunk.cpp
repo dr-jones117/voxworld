@@ -3,6 +3,7 @@
 #include "chunk.h"
 #include "voxwrld.h"
 #include "glError.h"
+#include "PerlinNoise.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -10,13 +11,13 @@
 
 #include <iostream>
 
-int render_distance = 3;
+int render_distance = 2;
 
-Chunk *generateChunk(int x, int y, int z)
+Chunk *generateChunk(glm::ivec3 currPos)
 {
     Chunk *chunk = new Chunk();
-    chunk->pos = glm::vec3((float)x, (float)y, (float)z);
-    std::cout << "generating chunk: (" << x << ", " << y << ", " << z << ")" << std::endl;
+    chunk->pos = glm::vec3((float)currPos.x, (float)currPos.y, (float)currPos.z);
+    // std::cout << "generating chunk: (" << currPos.x << ", " << currPos.y << ", " << currPos.z << ")" << std::endl;
 
     for (int i = 0; i < CHUNK_SIZE; i++)
     {
@@ -24,7 +25,15 @@ Chunk *generateChunk(int x, int y, int z)
         {
             for (int k = 0; k < CHUNK_SIZE; k++)
             {
-                chunk->data[i * j * k] = (BLOCK_TYPE)GRASS_BLOCK;
+                const double noise = perlin.octave2D_01(currPos.x + (i * 0.01), currPos.z + (k * 0.01), 4);
+                if (noise < 0.65)
+                {
+                    chunk->data[i * j * k] = (BLOCK_TYPE)AIR_BLOCK;
+                }
+                else
+                {
+                    chunk->data[i * j * k] = (BLOCK_TYPE)GRASS_BLOCK;
+                }
             }
         }
     }
@@ -40,6 +49,9 @@ void renderChunk(Chunk *chunk, Shader *shader)
         {
             for (int k = 0; k < CHUNK_SIZE; k++)
             {
+                if (chunk->data[i * j * k] == (BLOCK_TYPE)AIR_BLOCK)
+                    continue;
+
                 Texture *botT = textures[chunk->data[i * j * k] + BOTTOM_TEXTURE];
                 Texture *sideT = textures[chunk->data[i * j * k] + SIDE_TEXTURE];
                 Texture *topT = textures[chunk->data[i * j * k] + TOP_TEXTURE];
@@ -65,34 +77,53 @@ void renderChunk(Chunk *chunk, Shader *shader)
     }
 }
 
-void generateChunks(glm::ivec3 currPos, std::vector<Chunk *> &chunks)
+void insertChunk(ChunkMap &chunkMap, Chunk *chunk, glm::ivec3 pos)
 {
-    int x = currPos.x;
-    int y = currPos.y;
-    int z = currPos.z;
+    if (chunkMap.find(pos) == chunkMap.end())
+    {
+        chunkMap[pos] = chunk;
+    }
+}
 
-    chunks.push_back(generateChunk(x, y, z));
+void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
+{
+    int x = startPos.x;
+    int y = 0;
+    int z = startPos.z;
+
+    glm::ivec3 currPos = glm::ivec3(x, y, z);
+    Chunk *currChunk = generateChunk(currPos);
+    insertChunk(chunkMap, currChunk, currPos);
+
     for (int i = 1; i <= render_distance; i++)
     {
         // start top left
         for (int j = 0; j < i * 2; j++)
         {
-            chunks.push_back(generateChunk(x - i + j, y, z + i));
+            currPos = glm::ivec3(x - i + j, y, z + i);
+            Chunk *currChunk = generateChunk(currPos);
+            insertChunk(chunkMap, currChunk, currPos);
         }
         // start top right
         for (int j = 0; j < i * 2; j++)
         {
-            chunks.push_back(generateChunk(x + i, y, z + i - j));
+            currPos = glm::ivec3(x + i, y, z + i - j);
+            Chunk *currChunk = generateChunk(currPos);
+            insertChunk(chunkMap, currChunk, currPos);
         }
         // start bottom right
         for (int j = 0; j < i * 2; j++)
         {
-            chunks.push_back(generateChunk(x + i - j, y, z - i));
+            currPos = glm::ivec3(x + i - j, y, z - i);
+            Chunk *currChunk = generateChunk(currPos);
+            insertChunk(chunkMap, currChunk, currPos);
         }
         // start bottom left
         for (int j = 0; j < i * 2; j++)
         {
-            chunks.push_back(generateChunk(x - i, y, z - i + j));
+            currPos = glm::ivec3(x - i, y, z - i + j);
+            Chunk *currChunk = generateChunk(currPos);
+            insertChunk(chunkMap, currChunk, currPos);
         }
     }
 }
