@@ -157,3 +157,8 @@ void Camera::updateLookCoords(double xpos, double ypos)
 
     cameraFront = glm::normalize(direction);
 }
+
+glm::vec3 Camera::getPos()
+{
+    return cameraPos;
+}

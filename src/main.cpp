@@ -15,8 +15,8 @@
 #include "shader.h"
 #include "glError.h"
 #include "texture.h"
-#include "camera.h"
 #include "chunk.h"
+#include "player.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -25,6 +25,7 @@
 #include <chrono>
 
 int screenWidth = 1280, screenHeight = 720;
+Player *player = new Player();
 
 void error_callback(int error, const char *description)
 {
@@ -46,9 +47,6 @@ void togglePause(GLFWwindow *window)
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
-        toggleCurrentCamera();
-
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         togglePause(window);
 }
@@ -56,29 +54,28 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        currentCam->setForward(true);
+        player->setForward(true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
-        currentCam->setForward(false);
-
+        player->setForward(false);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        currentCam->setBackward(true);
+        player->setBackward(true);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
-        currentCam->setBackward(false);
+        player->setBackward(false);
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        currentCam->setLeftward(true);
+        player->setLeftward(true);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
-        currentCam->setLeftward(false);
+        player->setLeftward(false);
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        currentCam->setRightward(true);
+        player->setRightward(true);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
-        currentCam->setRightward(false);
+        player->setRightward(false);
 
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        currentCam->setSpeedMode(true);
+        player->setSpeedMode(true);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
-        currentCam->setSpeedMode(false);
+        player->setSpeedMode(false);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
@@ -90,7 +87,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
-    currentCam->updateLookCoords(xpos, ypos);
+    player->updateLookCoords(xpos, ypos);
 }
 
 int main(void)
@@ -124,11 +121,6 @@ int main(void)
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
-    cameras.push_back(new Camera(screenWidth, screenHeight));
-    cameras.push_back(new Camera(screenWidth, screenHeight));
-    cameras.push_back(new Camera(screenWidth, screenHeight));
-    setCurrentCamera(cameras.at(0));
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
@@ -225,11 +217,11 @@ int main(void)
 
     generateTextures();
     std::vector<Chunk *> chunks;
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
         for (int j = 0; j < 1; j++)
         {
-            for (int k = 0; k < 5; k++)
+            for (int k = 0; k < 1; k++)
             {
                 chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, (float)j * CHUNK_SIZE, (float)k * CHUNK_SIZE)));
             }
@@ -240,7 +232,7 @@ int main(void)
     {
         frameCount++;
         processInput(window);
-        currentCam->tick(glfwGetTime());
+        player->tick(glfwGetTime());
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -248,7 +240,7 @@ int main(void)
         GLCall(glClearColor(0.2f, 0.65f, 1.0f, 1.0f));
 
         // view
-        glm::mat4 view = currentCam->getView();
+        glm::mat4 view = player->getView();
         int viewLoc = glGetUniformLocation(shader.Id, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -271,10 +263,13 @@ int main(void)
         auto currentTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> elapsed = currentTime - startTime;
 
+        glm::vec3 chunkPos = player->getChunkPos();
+        std::cout << "Chunk: (" << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << ") " << std::endl;
+
         if (elapsed.count() >= 1.0f)
         {
             fps = frameCount / elapsed.count();
-            std::cout << "FPS: " << fps << std::endl;
+            // std::cout << "FPS: " << fps << std::endl;
             startTime = currentTime;
             frameCount = 0;
         }
@@ -283,6 +278,7 @@ int main(void)
     shader.deleteProgram();
 
     glfwDestroyWindow(window);
+    delete player;
 
     glfwTerminate();
     exit(EXIT_SUCCESS);

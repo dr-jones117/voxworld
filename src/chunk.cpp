@@ -15,7 +15,7 @@ Chunk *generateChunk(glm::vec3 pos)
 
     for (int i = 0; i < CHUNK_SIZE; i++)
     {
-        for (int j = 0; j < CHUNK_SIZE; j++)
+        for (int j = 0; j < CHUNK_HEIGHT; j++)
         {
             for (int k = 0; k < CHUNK_SIZE; k++)
             {
@@ -31,7 +31,7 @@ void renderChunk(Chunk *chunk, Shader *shader)
 {
     for (int i = 0; i < CHUNK_SIZE; i++)
     {
-        for (int j = 0; j < CHUNK_SIZE; j++)
+        for (int j = 0; j < CHUNK_HEIGHT; j++)
         {
             for (int k = 0; k < CHUNK_SIZE; k++)
             {
