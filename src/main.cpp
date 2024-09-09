@@ -111,7 +111,7 @@ int main(void)
 
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
@@ -256,7 +256,7 @@ int main(void)
         std::chrono::duration<float> elapsed = currentTime - startTime;
 
         glm::vec3 chunkPos = player->getChunkPos();
-        std::cout << "Chunk: (" << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << ") " << std::endl;
+        // std::cout << "Chunk: (" << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << ") " << std::endl;
 
         if (elapsed.count() >= 1.0f)
         {

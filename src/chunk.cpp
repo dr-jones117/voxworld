@@ -8,10 +8,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-Chunk *generateChunk(glm::vec3 pos)
+#include <iostream>
+
+int render_distance = 3;
+
+Chunk *generateChunk(int x, int y, int z)
 {
     Chunk *chunk = new Chunk();
-    chunk->pos = pos;
+    chunk->pos = glm::vec3((float)x, (float)y, (float)z);
+    std::cout << "generating chunk: (" << x << ", " << y << ", " << z << ")" << std::endl;
 
     for (int i = 0; i < CHUNK_SIZE; i++)
     {
@@ -40,7 +45,9 @@ void renderChunk(Chunk *chunk, Shader *shader)
                 Texture *topT = textures[chunk->data[i * j * k] + TOP_TEXTURE];
 
                 glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, glm::vec3(chunk->pos.x + (float)i, chunk->pos.y + (float)j, chunk->pos.z + (float)k));
+                model = glm::translate(model, glm::vec3((chunk->pos.x * (float)CHUNK_SIZE) + (float)i,
+                                                        (chunk->pos.y * (float)CHUNK_HEIGHT) + (float)j,
+                                                        (chunk->pos.z * (float)CHUNK_SIZE) + (float)k));
 
                 unsigned int modelLoc = glGetUniformLocation(shader->Id, "model");
                 GLCall(glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)));
@@ -60,17 +67,32 @@ void renderChunk(Chunk *chunk, Shader *shader)
 
 void generateChunks(glm::ivec3 currPos, std::vector<Chunk *> &chunks)
 {
-    chunks.push_back(generateChunk(glm::vec3(0.0f, 0.0f, 0.0f)));
-    for (int i = 0; i < RENDER_DISTANCE; i++)
-    {
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, 0, (float)i * CHUNK_SIZE - CHUNK_SIZE)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, 0, (float)i * CHUNK_SIZE + CHUNK_SIZE)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE - CHUNK_SIZE, (float)i * CHUNK_SIZE, 0)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE + CHUNK_SIZE, (float)i * CHUNK_SIZE, 0)));
+    int x = currPos.x;
+    int y = currPos.y;
+    int z = currPos.z;
 
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE - CHUNK_SIZE, 0, (float)i * CHUNK_SIZE - CHUNK_SIZE)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE + CHUNK_SIZE, 0, (float)i * CHUNK_SIZE + CHUNK_SIZE)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE - CHUNK_SIZE, (float)i * CHUNK_SIZE, 0 + CHUNK_SIZE)));
-        chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE + CHUNK_SIZE, (float)i * CHUNK_SIZE, 0 - CHUNK_SIZE)));
+    chunks.push_back(generateChunk(x, y, z));
+    for (int i = 1; i <= render_distance; i++)
+    {
+        // start top left
+        for (int j = 0; j < i * 2; j++)
+        {
+            chunks.push_back(generateChunk(x - i + j, y, z + i));
+        }
+        // start top right
+        for (int j = 0; j < i * 2; j++)
+        {
+            chunks.push_back(generateChunk(x + i, y, z + i - j));
+        }
+        // start bottom right
+        for (int j = 0; j < i * 2; j++)
+        {
+            chunks.push_back(generateChunk(x + i - j, y, z - i));
+        }
+        // start bottom left
+        for (int j = 0; j < i * 2; j++)
+        {
+            chunks.push_back(generateChunk(x - i, y, z - i + j));
+        }
     }
 }

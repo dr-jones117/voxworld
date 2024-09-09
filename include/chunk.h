@@ -6,8 +6,8 @@
 #include <vector>
 
 #define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 64
-#define RENDER_DISTANCE 1
+#define CHUNK_HEIGHT 12
+extern int render_distance;
 
 typedef struct
 {
@@ -15,7 +15,7 @@ typedef struct
     char data[CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT];
 } Chunk;
 
-Chunk *generateChunk(glm::vec3 pos);
+Chunk *generateChunk(int x, int y, int z);
 void renderChunk(Chunk *chunk, Shader *shader);
 
 void generateChunks(glm::ivec3 currPos, std::vector<Chunk *> &chunks);
