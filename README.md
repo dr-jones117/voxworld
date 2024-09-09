@@ -1,5 +1,18 @@
-voxwrld project by Jonah Morgan
+# voxwrld
+Project by Jonah Morgan
 
-trying to write a opengl engine for my voxel game
+Making a voxel game using OpenGL by following this [book](https://learnopengl.com/).
 
-[docs](https://docs.gl/)
+- [OpenGL Docs](https://docs.gl/)
+
+## Libraries Used
+___
+- glad
+- glfw
+- glm
+
+## Build
+___
+#### Ubuntu
+`cd path/of/voxwrld'
+'mkdir build && cd build && cmake .. && cmake --build .'
