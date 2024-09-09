@@ -1,7 +1,6 @@
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <unistd.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -72,11 +71,10 @@ int main(void)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
 
-    if (glewInit() != GLEW_OK)
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        fprintf(stderr, "error while initializing glew\n");
-        glfwTerminate();
-        exit(EXIT_FAILURE);
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
     }
 
     float vertices[] = {
@@ -149,10 +147,10 @@ int main(void)
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
-    Shader shader = Shader("../res/shaders/Blue.shader");
-    Texture grassSideTexture = Texture("../res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
-    Texture grassBottomTexture = Texture("../res/textures/grassBottom.jpg", GL_REPEAT, GL_NEAREST);
-    Texture grassTopTexture = Texture("../res/textures/grassTop.jpg", GL_REPEAT, GL_NEAREST);
+    Shader shader = Shader("./res/shaders/Blue.shader");
+    Texture grassSideTexture = Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
+    Texture grassBottomTexture = Texture("./res/textures/grassBottom.jpg", GL_REPEAT, GL_NEAREST);
+    Texture grassTopTexture = Texture("./res/textures/grassTop.jpg", GL_REPEAT, GL_NEAREST);
 
     glEnable(GL_DEPTH_TEST);
 
