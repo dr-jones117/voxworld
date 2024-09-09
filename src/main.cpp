@@ -9,11 +9,14 @@
 #include <iostream>
 #include <string.h>
 #include <math.h>
+#include <vector>
 
+#include "voxwrld.h"
 #include "shader.h"
 #include "glError.h"
 #include "texture.h"
 #include "camera.h"
+#include "chunk.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,13 +31,26 @@ void error_callback(int error, const char *description)
     fprintf(stderr, "Error: %s\n", description);
 }
 
+void togglePause(GLFWwindow *window)
+{
+    int cursorMode = glfwGetInputMode(window, GLFW_CURSOR);
+    if (cursorMode == GLFW_CURSOR_DISABLED)
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+    else
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+}
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
         toggleCurrentCamera();
+
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        togglePause(window);
 }
 
 void processInput(GLFWwindow *window)
@@ -68,6 +84,8 @@ void processInput(GLFWwindow *window)
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     GLCall(glViewport(0, 0, width, height));
+    screenWidth = width;
+    screenHeight = height;
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
@@ -86,7 +104,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "OpenGL Triangle", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "voxwrld", nullptr, nullptr);
     if (!window)
     {
         fprintf(stderr, "error while initializing window\n");
@@ -183,9 +201,6 @@ int main(void)
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
     Shader shader = Shader("./res/shaders/object.shader");
-    Texture grassSideTexture = Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
-    Texture grassBottomTexture = Texture("./res/textures/grassBottom.jpg", GL_REPEAT, GL_NEAREST);
-    Texture grassTopTexture = Texture("./res/textures/grassTop.jpg", GL_REPEAT, GL_NEAREST);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -208,6 +223,19 @@ int main(void)
     int frameCount = 0;
     float fps = 0.0f;
 
+    generateTextures();
+    std::vector<Chunk *> chunks;
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 1; j++)
+        {
+            for (int k = 0; k < 5; k++)
+            {
+                chunks.push_back(generateChunk(glm::vec3((float)i * CHUNK_SIZE, (float)j * CHUNK_SIZE, (float)k * CHUNK_SIZE)));
+            }
+        }
+    }
+
     while (!glfwWindowShouldClose(window))
     {
         frameCount++;
@@ -226,30 +254,14 @@ int main(void)
 
         // projection
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(55.0f), 800.0f / 600.0f, 0.1f, 10000.0f);
+        projection = glm::perspective(glm::radians(65.0f), (float)screenWidth / (float)screenHeight, 0.1f, 1000.0f);
         int projectionLoc = glGetUniformLocation(shader.Id, "projection");
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
         GLCall(glBindVertexArray(VAO));
-        for (unsigned int i = 0; i < 10; i++)
+        for (const auto &chunk : chunks)
         {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-
-            float angle = 20.0f * (i + 1) * (float)glfwGetTime();
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-
-            unsigned int modelLoc = glGetUniformLocation(shader.Id, "model");
-            GLCall(glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)));
-
-            grassSideTexture.bind();
-            GLCall(glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, (void *)0));
-
-            grassBottomTexture.bind();
-            GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)(24 * sizeof(float))));
-
-            grassTopTexture.bind();
-            GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)(30 * sizeof(float))));
+            renderChunk(chunk, &shader);
         }
 
         glfwSwapBuffers(window);
