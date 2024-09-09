@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <vector>
 
 #include <limits.h>
 #include <stdlib.h>
@@ -12,6 +13,7 @@
 #include "shader.h"
 #include "glError.h"
 #include "texture.h"
+#include "camera.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,17 +21,7 @@
 
 #include <chrono>
 
-void printMat4(const glm::mat4 &mat)
-{
-    for (int i = 0; i < 4; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
-            std::cout << mat[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-}
+int screenWidth = 1280, screenHeight = 720;
 
 void error_callback(int error, const char *description)
 {
@@ -40,11 +32,47 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+        toggleCurrentCamera();
+}
+
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        currentCam->setForward(true);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
+        currentCam->setForward(false);
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        currentCam->setBackward(true);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
+        currentCam->setBackward(false);
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        currentCam->setLeftward(true);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
+        currentCam->setLeftward(false);
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        currentCam->setRightward(true);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
+        currentCam->setRightward(false);
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        currentCam->setSpeedMode(true);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
+        currentCam->setSpeedMode(false);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     GLCall(glViewport(0, 0, width, height));
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    currentCam->updateLookCoords(xpos, ypos);
 }
 
 int main(void)
@@ -67,6 +95,8 @@ int main(void)
     }
 
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
@@ -76,6 +106,11 @@ int main(void)
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    cameras.push_back(new Camera(screenWidth, screenHeight));
+    cameras.push_back(new Camera(screenWidth, screenHeight));
+    cameras.push_back(new Camera(screenWidth, screenHeight));
+    setCurrentCamera(cameras.at(0));
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
@@ -147,7 +182,7 @@ int main(void)
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
-    Shader shader = Shader("./res/shaders/Blue.shader");
+    Shader shader = Shader("./res/shaders/object.shader");
     Texture grassSideTexture = Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
     Texture grassBottomTexture = Texture("./res/textures/grassBottom.jpg", GL_REPEAT, GL_NEAREST);
     Texture grassTopTexture = Texture("./res/textures/grassTop.jpg", GL_REPEAT, GL_NEAREST);
@@ -176,21 +211,22 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         frameCount++;
+        processInput(window);
+        currentCam->tick(glfwGetTime());
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(0.2f, 0.65f, 1.0f, 1.0f));
 
-        glm::mat4 view = glm::mat4(1.0f); // note that we’re translating the scene in the reverse direction
-        view = glm::translate(view, glm::vec3(0.0f, 0.1f, -3.0f));
-        view = glm::rotate(view, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(55.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
+        // view
+        glm::mat4 view = currentCam->getView();
         int viewLoc = glGetUniformLocation(shader.Id, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
+        // projection
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(55.0f), 800.0f / 600.0f, 0.1f, 10000.0f);
         int projectionLoc = glGetUniformLocation(shader.Id, "projection");
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
@@ -199,8 +235,10 @@ int main(void)
         {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
+
             float angle = 20.0f * (i + 1) * (float)glfwGetTime();
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
             unsigned int modelLoc = glGetUniformLocation(shader.Id, "model");
             GLCall(glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model)));
 
@@ -222,7 +260,7 @@ int main(void)
         std::chrono::duration<float> elapsed = currentTime - startTime;
 
         if (elapsed.count() >= 1.0f)
-        { // Calculate FPS every second
+        {
             fps = frameCount / elapsed.count();
             std::cout << "FPS: " << fps << std::endl;
             startTime = currentTime;
