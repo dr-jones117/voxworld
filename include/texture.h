@@ -7,3 +7,5 @@ public:
     Texture(const char *filepath, int wrapType, int filterType);
     void bind();
 };
+
+void generateTextures();
