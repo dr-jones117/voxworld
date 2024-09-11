@@ -114,6 +114,7 @@ int main(void)
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
 
@@ -123,123 +124,12 @@ int main(void)
         return -1;
     }
 
-    std::vector<Vertex> vertices = {
-        // North face
-        {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f)},
-        {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)},
-        {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
-        {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)},
-
-        // South face
-        {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)},
-        {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f)},
-        {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)},
-        {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
-
-        // West face
-        {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)},
-        {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
-        {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)},
-        {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
-
-        // East face
-        {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
-        {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)},
-        {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
-        {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)},
-
-        // Bottom face
-        {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
-        {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)},
-        {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
-        {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f)},
-
-        // Top face
-        {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)},
-        {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
-        {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f)},
-        {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f)}
-
-    };
-
-    std::vector<unsigned int> indices = {
-        0,
-        1,
-        2,
-        2,
-        3,
-        0,
-
-        4,
-        5,
-        6,
-        6,
-        7,
-        4,
-
-        8,
-        9,
-        10,
-        10,
-        11,
-        8,
-
-        12,
-        13,
-        14,
-        14,
-        15,
-        12,
-
-        16,
-        17,
-        18,
-        18,
-        19,
-        16,
-
-        20,
-        21,
-        22,
-        22,
-        23,
-        20};
-
-    unsigned int VAO;
-    GLCall(glGenVertexArrays(1, &VAO));
-    GLCall(glBindVertexArray(VAO));
-
-    unsigned int VBO;
-    GLCall(glGenBuffers(1, &VBO));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
-    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), &vertices.front(), GL_STATIC_DRAW));
-
-    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)0));
-    GLCall(glEnableVertexAttribArray(0));
-
-    GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(3 * sizeof(float))));
-    GLCall(glEnableVertexAttribArray(1));
-
-    unsigned int EBO;
-    GLCall(glGenBuffers(1, &EBO));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices.front(), GL_STATIC_DRAW));
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
 
     Shader shader = Shader("./res/shaders/object.shader");
-
-    glEnable(GL_DEPTH_TEST);
-
-    glm::vec3 cubePositions[] = {
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)};
 
     shader.useProgram();
 
@@ -248,7 +138,8 @@ int main(void)
     int frameCount = 0;
     float fps = 0.0f;
 
-    generateTextures();
+    Texture atlas = Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
+    atlas.bind();
 
     ChunkMap chunkMap;
     while (!glfwWindowShouldClose(window))
@@ -274,11 +165,12 @@ int main(void)
         int projectionLoc = glGetUniformLocation(shader.Id, "projection");
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-        GLCall(glBindVertexArray(VAO));
-        for (const auto &pair : chunkMap)
-        {
-            renderChunk(pair.second, &shader);
-        }
+        glm::mat4 model;
+        model = glm::mat4(1.0f);
+        int modelLoc = glGetUniformLocation(shader.Id, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+        renderChunks(&chunkMap, &shader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -293,7 +185,7 @@ int main(void)
         if (elapsed.count() >= 1.0f)
         {
             fps = frameCount / elapsed.count();
-            // std::cout << "FPS: " << fps << std::endl;
+            std::cout << "FPS: " << fps << std::endl;
             startTime = currentTime;
             frameCount = 0;
         }
