@@ -23,6 +23,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <chrono>
+#include <rendering.h>
 
 int screenWidth = 1280, screenHeight = 720;
 Player *player = new Player();
@@ -122,55 +123,87 @@ int main(void)
         return -1;
     }
 
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+    std::vector<Vertex> vertices = {
+        // North face
+        {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f)},
+        {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)},
+        {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
+        {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)},
 
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+        // South face
+        {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)},
+        {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f)},
+        {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)},
+        {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
 
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        // West face
+        {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)},
+        {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
+        {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)},
+        {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
 
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        // East face
+        {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
+        {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)},
+        {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
+        {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)},
 
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        // Bottom face
+        {glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)},
+        {glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)},
+        {glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
+        {glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f)},
 
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f};
+        // Top face
+        {glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)},
+        {glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)},
+        {glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f)},
+        {glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f)}
 
-    unsigned int indices[] = {
-        0, 1, 2,
-        2, 3, 0,
+    };
 
-        4, 5, 6,
-        6, 7, 4,
+    std::vector<unsigned int> indices = {
+        0,
+        1,
+        2,
+        2,
+        3,
+        0,
 
-        8, 9, 10,
-        10, 11, 8,
+        4,
+        5,
+        6,
+        6,
+        7,
+        4,
 
-        12, 13, 14,
-        14, 15, 12,
+        8,
+        9,
+        10,
+        10,
+        11,
+        8,
 
-        16, 17, 18,
-        18, 19, 16,
+        12,
+        13,
+        14,
+        14,
+        15,
+        12,
 
-        20, 21, 22,
-        22, 23, 20};
+        16,
+        17,
+        18,
+        18,
+        19,
+        16,
+
+        20,
+        21,
+        22,
+        22,
+        23,
+        20};
 
     unsigned int VAO;
     GLCall(glGenVertexArrays(1, &VAO));
@@ -179,7 +212,7 @@ int main(void)
     unsigned int VBO;
     GLCall(glGenBuffers(1, &VBO));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
-    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), &vertices.front(), GL_STATIC_DRAW));
 
     GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)0));
     GLCall(glEnableVertexAttribArray(0));
@@ -190,7 +223,7 @@ int main(void)
     unsigned int EBO;
     GLCall(glGenBuffers(1, &EBO));
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices.front(), GL_STATIC_DRAW));
 
     Shader shader = Shader("./res/shaders/object.shader");
 
