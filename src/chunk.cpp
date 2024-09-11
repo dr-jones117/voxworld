@@ -46,10 +46,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
 
     unbindChunk(chunk);
 
-    // Chunk *northChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x, currPos.y, currPos.z - 1));
-    // Chunk *southMap = getChunkFromMap(chunkMap, glm::ivec3(currPos.x, currPos.y, currPos.z + 1));
-    // Chunk *westMap = getChunkFromMap(chunkMap, glm::ivec3(currPos.x + 1, currPos.y, currPos.z));
-    // Chunk *eastMap = getChunkFromMap(chunkMap, glm::ivec3(currPos.x - 1, currPos.y, currPos.z));
+    Chunk *northChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x, currPos.y, currPos.z - 1));
+    Chunk *southChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x, currPos.y, currPos.z + 1));
+    Chunk *westChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x + 1, currPos.y, currPos.z));
+    Chunk *eastChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x - 1, currPos.y, currPos.z));
 
     unsigned int indiceOffset = 0;
 
