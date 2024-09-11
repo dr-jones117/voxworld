@@ -7,8 +7,8 @@
 #include "rendering.h"
 #include <vector>
 
-#define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 16
+#define CHUNK_SIZE 32
+#define CHUNK_HEIGHT 48
 
 extern int render_distance;
 

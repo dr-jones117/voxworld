@@ -11,7 +11,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 8;
+int render_distance = 4;
 
 void bindChunk(Chunk &chunk)
 {
@@ -59,7 +59,7 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
     {
         for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
-            double freq = 0.1;
+            double freq = 0.01;
             double noise = perlin.octave2D_01(freq * (currPos.x * CHUNK_SIZE + i), freq * (currPos.z * CHUNK_SIZE + k), 8);
 
             int terrainHeight = (int)(noise * CHUNK_HEIGHT);
@@ -241,7 +241,7 @@ void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
     {
         Chunk chunk = pair.second;
         glm::vec3 vector = chunk.pos - startPos;
-        if ((int)glm::length(vector) > (render_distance + 3))
+        if ((int)glm::length(vector) > (render_distance + 1))
         {
             chunkPosToRemove.push_back(chunk.pos);
         }
