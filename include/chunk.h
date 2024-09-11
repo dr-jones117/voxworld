@@ -9,6 +9,7 @@
 
 #define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 32
+
 extern int render_distance;
 
 const siv::PerlinNoise::seed_type seed = 123456u;
@@ -19,16 +20,25 @@ const siv::PerlinNoise perlin{seed};
 typedef struct
 {
     glm::ivec3 pos;
-    char data[CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT];
+    char data[CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE];
+
+    unsigned int VBO, EBO, VAO;
+
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    unsigned int VBO, EBO, VAO;
+
 } Chunk;
 
-typedef std::unordered_map<glm::ivec3, Chunk *, Vec3Hash, Vec3Equal> ChunkMap;
+typedef std::unordered_map<glm::ivec3, Chunk, Vec3Hash, Vec3Equal> ChunkMap;
 
-Chunk *generateChunk(int x, int y, int z);
-void renderChunks(ChunkMap *chunkMap, Shader *shader);
-void bindChunk(Chunk *chunk);
+void bindChunk(Chunk &chunk);
+void unbindChunk(Chunk &chunk);
 
-void generateChunks(glm::ivec3 currPos, ChunkMap &chunks);
+void renderChunks(ChunkMap &chunkMap);
+
+void generateChunks(ChunkMap &chunkMap, glm::ivec3 currPos);
+Chunk generateChunk(glm::ivec3 currPos);
+
+bool chunkExists(ChunkMap &chunkMap, glm::ivec3 pos);
+void removeChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos);
+void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos);

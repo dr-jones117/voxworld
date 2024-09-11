@@ -1,40 +1,40 @@
 #include <glad/glad.h>
 
-#include "chunk.h"
-#include "voxwrld.h"
-#include "glError.h"
-#include "PerlinNoise.hpp"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 
-int render_distance = 8;
+#include "chunk.h"
+#include "voxwrld.h"
+#include "glError.h"
+#include "PerlinNoise.hpp"
 
-void bindChunk(Chunk *chunk)
+int render_distance = 5;
+
+void bindChunk(Chunk &chunk)
 {
-    GLCall(glBindVertexArray(chunk->VAO));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, chunk->VBO));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk->EBO));
+    GLCall(glBindVertexArray(chunk.VAO));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, chunk.VBO));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk.EBO));
 }
 
-void unbindChunk(Chunk *chunk)
+void unbindChunk(Chunk &chunk)
 {
     GLCall(glBindVertexArray(0));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
-Chunk *generateChunk(glm::ivec3 currPos)
+Chunk generateChunk(glm::ivec3 currPos)
 {
-    Chunk *chunk = new Chunk();
-    chunk->pos = currPos;
+    Chunk chunk;
+    chunk.pos = currPos;
 
-    GLCall(glGenVertexArrays(1, &chunk->VAO));
-    GLCall(glGenBuffers(1, &chunk->VBO));
-    GLCall(glGenBuffers(1, &chunk->EBO));
+    GLCall(glGenVertexArrays(1, &chunk.VAO));
+    GLCall(glGenBuffers(1, &chunk.VBO));
+    GLCall(glGenBuffers(1, &chunk.EBO));
 
     bindChunk(chunk);
 
@@ -61,104 +61,104 @@ Chunk *generateChunk(glm::ivec3 currPos)
             {
                 if (j < terrainHeight)
                 {
-                    chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] = (BLOCK_TYPE)GRASS_BLOCK;
+                    chunk.data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] = (BLOCK_TYPE)GRASS_BLOCK;
 
                     // World position of the block
                     glm::vec3 blockPos = glm::vec3((currPos.x * CHUNK_SIZE) + i, (currPos.y * CHUNK_SIZE) + j, (currPos.z * CHUNK_SIZE) + k);
 
                     // North face
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
 
-                    chunk->indices.push_back(indiceOffset + 0);
-                    chunk->indices.push_back(indiceOffset + 1);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 3);
-                    chunk->indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 1);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 3);
+                    chunk.indices.push_back(indiceOffset + 0);
 
                     indiceOffset += 4;
 
                     // South face
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
 
-                    chunk->indices.push_back(indiceOffset + 0);
-                    chunk->indices.push_back(indiceOffset + 1);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 3);
-                    chunk->indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 1);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 3);
+                    chunk.indices.push_back(indiceOffset + 0);
 
                     indiceOffset += 4;
 
                     // West face
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
 
-                    chunk->indices.push_back(indiceOffset + 0);
-                    chunk->indices.push_back(indiceOffset + 1);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 3);
-                    chunk->indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 1);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 3);
+                    chunk.indices.push_back(indiceOffset + 0);
 
                     indiceOffset += 4;
 
                     // East face
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
 
-                    chunk->indices.push_back(indiceOffset + 0);
-                    chunk->indices.push_back(indiceOffset + 1);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 3);
-                    chunk->indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 1);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 3);
+                    chunk.indices.push_back(indiceOffset + 0);
 
                     indiceOffset += 4;
 
                     // Bottom face
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
 
-                    chunk->indices.push_back(indiceOffset + 0);
-                    chunk->indices.push_back(indiceOffset + 1);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 3);
-                    chunk->indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 1);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 3);
+                    chunk.indices.push_back(indiceOffset + 0);
 
                     indiceOffset += 4;
 
                     // Top face
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
-                    chunk->vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
+                    chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
 
-                    chunk->indices.push_back(indiceOffset + 0);
-                    chunk->indices.push_back(indiceOffset + 1);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 2);
-                    chunk->indices.push_back(indiceOffset + 3);
-                    chunk->indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 0);
+                    chunk.indices.push_back(indiceOffset + 1);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 2);
+                    chunk.indices.push_back(indiceOffset + 3);
+                    chunk.indices.push_back(indiceOffset + 0);
 
                     indiceOffset += 4;
                 }
                 else
                 {
-                    chunk->data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] = (BLOCK_TYPE)AIR_BLOCK;
+                    chunk.data[i + CHUNK_SIZE * (j + CHUNK_HEIGHT * k)] = (BLOCK_TYPE)AIR_BLOCK;
                 }
             }
         }
@@ -166,16 +166,16 @@ Chunk *generateChunk(glm::ivec3 currPos)
     return chunk;
 }
 
-void renderChunks(ChunkMap *chunkMap, Shader *shader)
+void renderChunks(ChunkMap &chunkMap)
 {
-    for (const auto &pair : *chunkMap)
+    for (const auto &pair : chunkMap)
     {
-        Chunk *chunk = pair.second;
+        Chunk chunk = pair.second;
         bindChunk(chunk);
 
-        GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunk->vertices.size(), &chunk->vertices.front(), GL_STATIC_DRAW));
-        GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * chunk->indices.size(), &chunk->indices.front(), GL_STATIC_DRAW));
-        GLCall(glDrawElements(GL_TRIANGLES, chunk->indices.size(), GL_UNSIGNED_INT, (void *)0));
+        GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunk.vertices.size(), &chunk.vertices.front(), GL_STATIC_DRAW));
+        GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * chunk.indices.size(), &chunk.indices.front(), GL_STATIC_DRAW));
+        GLCall(glDrawElements(GL_TRIANGLES, chunk.indices.size(), GL_UNSIGNED_INT, (void *)0));
 
         unbindChunk(chunk);
     }
@@ -201,12 +201,11 @@ void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
     std::vector<glm::ivec3> chunkPosToRemove;
     for (const auto &pair : chunkMap)
     {
-        Chunk *chunk = pair.second;
-        // chunk->pos
-        glm::vec3 vector = chunk->pos - startPos;
+        Chunk chunk = pair.second;
+        glm::vec3 vector = chunk.pos - startPos;
         if ((int)glm::length(vector) > (render_distance + 3))
         {
-            chunkPosToRemove.push_back(chunk->pos);
+            chunkPosToRemove.push_back(chunk.pos);
         }
     }
 
@@ -216,7 +215,7 @@ void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
     }
 }
 
-void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
+void generateChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
 {
     int x = startPos.x;
     int y = 0;
@@ -225,7 +224,7 @@ void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
     glm::ivec3 currPos = glm::ivec3(x, y, z);
     if (!chunkExists(chunkMap, currPos))
     {
-        Chunk *currChunk = generateChunk(currPos);
+        Chunk currChunk = generateChunk(currPos);
         chunkMap[currPos] = currChunk;
     }
 
@@ -237,7 +236,7 @@ void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
             currPos = glm::ivec3(x - i + j, y, z + i);
             if (!chunkExists(chunkMap, currPos))
             {
-                Chunk *currChunk = generateChunk(currPos);
+                Chunk currChunk = generateChunk(currPos);
                 chunkMap[currPos] = currChunk;
             }
         }
@@ -247,7 +246,7 @@ void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
             currPos = glm::ivec3(x + i, y, z + i - j);
             if (!chunkExists(chunkMap, currPos))
             {
-                Chunk *currChunk = generateChunk(currPos);
+                Chunk currChunk = generateChunk(currPos);
                 chunkMap[currPos] = currChunk;
             }
         }
@@ -257,7 +256,7 @@ void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
             currPos = glm::ivec3(x + i - j, y, z - i);
             if (!chunkExists(chunkMap, currPos))
             {
-                Chunk *currChunk = generateChunk(currPos);
+                Chunk currChunk = generateChunk(currPos);
                 chunkMap[currPos] = currChunk;
             }
         }
@@ -267,7 +266,7 @@ void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
             currPos = glm::ivec3(x - i, y, z - i + j);
             if (!chunkExists(chunkMap, currPos))
             {
-                Chunk *currChunk = generateChunk(currPos);
+                Chunk currChunk = generateChunk(currPos);
                 chunkMap[currPos] = currChunk;
             }
         }

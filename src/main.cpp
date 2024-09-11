@@ -130,22 +130,22 @@ int main(void)
     glFrontFace(GL_CW);
 
     Shader shader = Shader("./res/shaders/object.shader");
-
     shader.useProgram();
+
+    Texture atlas = Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
+    atlas.bind();
+
+    ChunkMap chunkMap;
 
     // Timing variables
     auto startTime = std::chrono::high_resolution_clock::now();
     int frameCount = 0;
     float fps = 0.0f;
 
-    Texture atlas = Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
-    atlas.bind();
-
-    ChunkMap chunkMap;
     while (!glfwWindowShouldClose(window))
     {
         frameCount++;
-        generateChunks(player->getChunkPos(), chunkMap);
+        generateChunks(chunkMap, player->getChunkPos());
         processInput(window);
         player->tick(glfwGetTime());
 
@@ -170,7 +170,7 @@ int main(void)
         int modelLoc = glGetUniformLocation(shader.Id, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        renderChunks(&chunkMap, &shader);
+        renderChunks(chunkMap);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
