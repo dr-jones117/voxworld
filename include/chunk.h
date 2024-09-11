@@ -7,7 +7,7 @@
 #include "rendering.h"
 #include <vector>
 
-#define CHUNK_SIZE 12
+#define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 32
 extern int render_distance;
 
@@ -18,7 +18,7 @@ const siv::PerlinNoise perlin{seed};
 
 typedef struct
 {
-    glm::vec3 pos;
+    glm::ivec3 pos;
     char data[CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT];
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;

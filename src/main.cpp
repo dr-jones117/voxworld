@@ -185,7 +185,7 @@ int main(void)
         if (elapsed.count() >= 1.0f)
         {
             fps = frameCount / elapsed.count();
-            std::cout << "FPS: " << fps << std::endl;
+            // std::cout << "FPS: " << fps << std::endl;
             startTime = currentTime;
             frameCount = 0;
         }

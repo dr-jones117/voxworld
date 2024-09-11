@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-int render_distance = 2;
+int render_distance = 8;
 
 void bindChunk(Chunk *chunk)
 {
@@ -30,7 +30,7 @@ void unbindChunk(Chunk *chunk)
 Chunk *generateChunk(glm::ivec3 currPos)
 {
     Chunk *chunk = new Chunk();
-    chunk->pos = glm::vec3((float)currPos.x, (float)currPos.y, (float)currPos.z);
+    chunk->pos = currPos;
 
     GLCall(glGenVertexArrays(1, &chunk->VAO));
     GLCall(glGenBuffers(1, &chunk->VBO));
@@ -188,6 +188,34 @@ bool chunkExists(ChunkMap &chunkMap, glm::ivec3 pos)
     return true;
 }
 
+void removeChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos)
+{
+    if (chunkExists(chunkMap, pos))
+    {
+        chunkMap.erase(pos);
+    }
+}
+
+void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
+{
+    std::vector<glm::ivec3> chunkPosToRemove;
+    for (const auto &pair : chunkMap)
+    {
+        Chunk *chunk = pair.second;
+        // chunk->pos
+        glm::vec3 vector = chunk->pos - startPos;
+        if ((int)glm::length(vector) > (render_distance + 3))
+        {
+            chunkPosToRemove.push_back(chunk->pos);
+        }
+    }
+
+    for (const auto &pos : chunkPosToRemove)
+    {
+        removeChunkFromMap(chunkMap, pos);
+    }
+}
+
 void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
 {
     int x = startPos.x;
@@ -244,4 +272,6 @@ void generateChunks(glm::ivec3 startPos, ChunkMap &chunkMap)
             }
         }
     }
+
+    removeUnneededChunks(chunkMap, startPos);
 }
