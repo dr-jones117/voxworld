@@ -179,12 +179,12 @@ int main(void)
         std::chrono::duration<float> elapsed = currentTime - startTime;
 
         glm::vec3 playerPos = player->getPos();
-        std::cout << "Chunk: (" << playerPos.x << ", " << playerPos.y << ", " << playerPos.z << ") " << std::endl;
+        // std::cout << "Chunk: (" << playerPos.x << ", " << playerPos.y << ", " << playerPos.z << ") " << std::endl;
 
         if (elapsed.count() >= 1.0f)
         {
             fps = frameCount / elapsed.count();
-            // std::cout << "FPS: " << fps << std::endl;
+            std::cout << "FPS: " << fps << std::endl;
             startTime = currentTime;
             frameCount = 0;
         }

@@ -7,12 +7,12 @@
 #include "rendering.h"
 #include <vector>
 
-#define CHUNK_SIZE 6
-#define CHUNK_HEIGHT 6
+#define CHUNK_SIZE 16
+#define CHUNK_HEIGHT 16
 
 extern int render_distance;
 
-const siv::PerlinNoise::seed_type seed = 123456u;
+const siv::PerlinNoise::seed_type seed = 234516u;
 const siv::PerlinNoise perlin{seed};
 
 #include "vec3.h"
