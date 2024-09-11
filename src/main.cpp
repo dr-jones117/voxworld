@@ -11,7 +11,6 @@
 #include <math.h>
 #include <vector>
 
-#include "voxwrld.h"
 #include "shader.h"
 #include "glError.h"
 #include "texture.h"
@@ -179,8 +178,8 @@ int main(void)
         auto currentTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> elapsed = currentTime - startTime;
 
-        glm::vec3 chunkPos = player->getChunkPos();
-        // std::cout << "Chunk: (" << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << ") " << std::endl;
+        glm::vec3 playerPos = player->getPos();
+        std::cout << "Chunk: (" << playerPos.x << ", " << playerPos.y << ", " << playerPos.z << ") " << std::endl;
 
         if (elapsed.count() >= 1.0f)
         {

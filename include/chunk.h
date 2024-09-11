@@ -7,8 +7,8 @@
 #include "rendering.h"
 #include <vector>
 
-#define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 32
+#define CHUNK_SIZE 6
+#define CHUNK_HEIGHT 6
 
 extern int render_distance;
 
@@ -37,8 +37,9 @@ void unbindChunk(Chunk &chunk);
 void renderChunks(ChunkMap &chunkMap);
 
 void generateChunks(ChunkMap &chunkMap, glm::ivec3 currPos);
-Chunk generateChunk(glm::ivec3 currPos);
+void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos);
 
 bool chunkExists(ChunkMap &chunkMap, glm::ivec3 pos);
+Chunk *getChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos);
 void removeChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos);
 void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos);

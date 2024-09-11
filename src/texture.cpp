@@ -4,7 +4,6 @@
 #include "texture.h"
 #include "glError.h"
 #include "stb_image.h"
-#include "voxwrld.h"
 
 Texture::Texture(const char *filepath, int wrapType, int filterType)
 {
@@ -35,11 +34,4 @@ Texture::Texture(const char *filepath, int wrapType, int filterType)
 void Texture::bind()
 {
     GLCall(glBindTexture(GL_TEXTURE_2D, Id));
-}
-
-void generateTextures()
-{
-    textures[(int)(GRASS_BLOCK + BOTTOM_TEXTURE)] = new Texture("./res/textures/grassBottom.jpg", GL_REPEAT, GL_NEAREST);
-    textures[(int)(GRASS_BLOCK + SIDE_TEXTURE)] = new Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
-    textures[(int)(GRASS_BLOCK + TOP_TEXTURE)] = new Texture("./res/textures/grassTop.jpg", GL_REPEAT, GL_NEAREST);
 }
