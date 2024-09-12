@@ -131,7 +131,7 @@ int main(void)
     Shader shader = Shader("./res/shaders/object.shader");
     shader.useProgram();
 
-    Texture atlas = Texture("./res/textures/grass.jpg", GL_REPEAT, GL_NEAREST);
+    Texture atlas = Texture("./res/textures/texture-atlas.jpg", GL_REPEAT, GL_NEAREST);
     atlas.bind();
 
     ChunkMap chunkMap;

@@ -27,6 +27,28 @@ void unbindChunk(Chunk &chunk)
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
+typedef struct
+{
+    float u1, v1, u2, v2;
+} UVcoords;
+
+UVcoords getUVcoords(int row, int col)
+{
+    float tileWidthU = 16.0f / 1024.0f;  // = 0.015625
+    float tileHeightV = 16.0f / 1024.0f; // = 0.015625
+
+    float startU = col * tileWidthU;  // = 3 * 0.015625 = 0.046875
+    float startV = row * tileHeightV; // = 2 * 0.015625 = 0.03125
+
+    // Texture coordinates for the quad
+    float u1 = startU;               // 0.046875
+    float v1 = startV;               // 0.03125
+    float u2 = startU + tileWidthU;  // 0.046875 + 0.015625 = 0.0625
+    float v2 = startV + tileHeightV; // 0.03125 + 0.015625 = 0.046875
+
+    return {u1, v1, u2, v2};
+}
+
 void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
 {
     Chunk chunk;
@@ -45,11 +67,6 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
     GLCall(glEnableVertexAttribArray(1));
 
     unbindChunk(chunk);
-
-    Chunk *northChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x, currPos.y, currPos.z - 1));
-    Chunk *southChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x, currPos.y, currPos.z + 1));
-    Chunk *westChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x + 1, currPos.y, currPos.z));
-    Chunk *eastChunk = getChunkFromMap(chunkMap, glm::ivec3(currPos.x - 1, currPos.y, currPos.z));
 
     unsigned int indiceOffset = 0;
 
@@ -78,6 +95,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
         }
     }
 
+    UVcoords grassBottom = getUVcoords(0, 0);
+    UVcoords grassSide = getUVcoords(0, 1);
+    UVcoords grassTop = getUVcoords(0, 2);
+
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
         for (int y = 0; y < CHUNK_HEIGHT; y++) // Z-axis
@@ -92,10 +113,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
                     if (z <= 0 || chunk.data[northIndex] == BLOCK::AIR_BLOCK)
                     {
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
 
                         chunk.indices.push_back(indiceOffset + 0);
                         chunk.indices.push_back(indiceOffset + 1);
@@ -110,10 +131,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     if (z >= CHUNK_SIZE - 1 || chunk.data[southIdx] == BLOCK::AIR_BLOCK)
                     {
                         // South face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
 
                         chunk.indices.push_back(indiceOffset + 0);
                         chunk.indices.push_back(indiceOffset + 1);
@@ -128,10 +149,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     if (x <= 0 || chunk.data[westIdx] == BLOCK::AIR_BLOCK)
                     {
                         // West face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
 
                         chunk.indices.push_back(indiceOffset + 0);
                         chunk.indices.push_back(indiceOffset + 1);
@@ -146,10 +167,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     if (x >= CHUNK_SIZE - 1 || chunk.data[eastIdx] == BLOCK::AIR_BLOCK)
                     {
                         // East face
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
 
                         chunk.indices.push_back(indiceOffset + 0);
                         chunk.indices.push_back(indiceOffset + 1);
@@ -164,10 +185,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     if (y <= 0 || chunk.data[bottomIdx] == BLOCK::AIR_BLOCK)
                     {
                         // Bottom face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(grassBottom.u1, grassBottom.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(grassBottom.u2, grassBottom.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(grassBottom.u2, grassBottom.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(grassBottom.u1, grassBottom.v2)});
 
                         chunk.indices.push_back(indiceOffset + 0);
                         chunk.indices.push_back(indiceOffset + 1);
@@ -182,10 +203,10 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     if (y >= CHUNK_HEIGHT - 1 || chunk.data[topIdx] == BLOCK::AIR_BLOCK)
                     {
                         // Top face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(1.0f, 1.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(1.0f, 0.0f)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(0.0f, 0.0f)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(grassTop.u1, grassTop.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(grassTop.u2, grassTop.v2)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(grassTop.u2, grassTop.v1)});
+                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(grassTop.u1, grassTop.v1)});
 
                         chunk.indices.push_back(indiceOffset + 0);
                         chunk.indices.push_back(indiceOffset + 1);
