@@ -17,17 +17,20 @@ const siv::PerlinNoise perlin{seed};
 
 #include "vec3.h"
 
-typedef struct
+class Chunk
 {
+public:
     glm::ivec3 pos;
-    char data[CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE];
-
+    std::vector<char> data;
     unsigned int VBO, EBO, VAO;
-
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
-} Chunk;
+    Chunk()
+    {
+        data.reserve(CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE);
+    }
+};
 
 typedef std::unordered_map<glm::ivec3, Chunk, Vec3Hash, Vec3Equal> ChunkMap;
 

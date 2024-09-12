@@ -49,6 +49,38 @@ UVcoords getUVcoords(int row, int col)
     return {u1, v1, u2, v2};
 }
 
+std::vector<char> getChunkData(ChunkMap &chunkMap, glm::ivec3 pos)
+{
+    int blocksPerChunk = CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE;
+    std::vector<char> data;
+    data.reserve(blocksPerChunk);
+
+    for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
+    {
+        for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
+        {
+            double freq = 0.1;
+            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
+
+            int terrainHeight = (int)(noise * CHUNK_HEIGHT);
+
+            for (int j = 0; j < CHUNK_HEIGHT; j++) // Y-axis
+            {
+                if (j < terrainHeight)
+                {
+                    data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
+                }
+                else
+                {
+                    data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
+                }
+            }
+        }
+    }
+
+    return data;
+}
+
 void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
 {
     Chunk chunk;
@@ -70,30 +102,7 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
 
     unsigned int indiceOffset = 0;
 
-    int blocksPerChunk = CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE;
-
-    for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
-    {
-        for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
-        {
-            double freq = 0.01;
-            double noise = perlin.octave2D_01(freq * (currPos.x * CHUNK_SIZE + i), freq * (currPos.z * CHUNK_SIZE + k), 8);
-
-            int terrainHeight = (int)(noise * CHUNK_HEIGHT);
-
-            for (int j = 0; j < CHUNK_HEIGHT; j++) // Y-axis
-            {
-                if (j < terrainHeight)
-                {
-                    chunk.data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
-                }
-                else
-                {
-                    chunk.data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
-                }
-            }
-        }
-    }
+    chunk.data = getChunkData(chunkMap, currPos);
 
     UVcoords grassBottom = getUVcoords(0, 0);
     UVcoords grassSide = getUVcoords(0, 1);
@@ -262,7 +271,7 @@ void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
     {
         Chunk chunk = pair.second;
         glm::vec3 vector = chunk.pos - startPos;
-        if ((int)glm::length(vector) > (render_distance + 1))
+        if ((int)glm::length(vector) > (render_distance + 3))
         {
             chunkPosToRemove.push_back(chunk.pos);
         }
