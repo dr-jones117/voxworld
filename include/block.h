@@ -10,6 +10,8 @@ enum BLOCK
 {
     AIR_BLOCK = 0,
     GRASS_BLOCK = 1,
+    DIRT_BLOCK = 2,
+    STONE_BLOCK = 3
 };
 
 typedef struct
@@ -46,11 +48,12 @@ static UVcoords getUVcoords(int row, int col)
 static std::unordered_map<BLOCK, std::vector<UVcoords>> blockTextureCoords = {
     {BLOCK::AIR_BLOCK, {}},
     {BLOCK::GRASS_BLOCK, {getUVcoords(0, 0), getUVcoords(0, 1), getUVcoords(0, 2)}},
+    {BLOCK::DIRT_BLOCK, {getUVcoords(0, 0), getUVcoords(0, 0), getUVcoords(0, 0)}},
+    {BLOCK::STONE_BLOCK, {getUVcoords(0, 3), getUVcoords(0, 3), getUVcoords(0, 3)}},
 };
 
-void renderGrassBlock(BlockRenderInfo &renderInfo)
+void renderRegularBlock(BlockRenderInfo &renderInfo, std::vector<UVcoords> &coords)
 {
-    std::vector<UVcoords> coords = blockTextureCoords[BLOCK::GRASS_BLOCK];
     UVcoords bottomTexCoords = coords[0];
     UVcoords sideTexCoords = coords[1];
     UVcoords topTexCoords = coords[2];
@@ -159,12 +162,14 @@ void renderGrassBlock(BlockRenderInfo &renderInfo)
     }
 }
 
-void renderAirBlock(BlockRenderInfo &renderInfo)
+void renderAirBlock(BlockRenderInfo &renderInfo, std::vector<UVcoords> &coords)
 {
     return;
 }
 
-static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRenderFunctions = {
+static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo, std::vector<UVcoords> &)> blockRenderFunctions = {
     {BLOCK::AIR_BLOCK, renderAirBlock},
-    {BLOCK::GRASS_BLOCK, renderGrassBlock},
+    {BLOCK::GRASS_BLOCK, renderRegularBlock},
+    {BLOCK::DIRT_BLOCK, renderRegularBlock},
+    {BLOCK::STONE_BLOCK, renderRegularBlock},
 };

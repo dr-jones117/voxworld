@@ -37,16 +37,30 @@ std::vector<char> getChunkData(ChunkMap &chunkMap, glm::ivec3 pos)
     {
         for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
-            double freq = 0.1;
+            double freq = 0.04;
             double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
-
+            int blocksInHeight = 0;
             int terrainHeight = (int)(noise * CHUNK_HEIGHT);
 
-            for (int j = 0; j < CHUNK_HEIGHT; j++) // Y-axis
+            for (int j = CHUNK_HEIGHT - 1; j >= 0; j--) // Y-axis
             {
-                if (j < terrainHeight)
+                if (blocksInHeight >= 1)
+                {
+                    if (blocksInHeight >= 3)
+                    {
+                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
+                    }
+                    else
+                    {
+                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::DIRT_BLOCK;
+                    }
+
+                    blocksInHeight++;
+                }
+                else if (j < terrainHeight)
                 {
                     data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
+                    blocksInHeight++;
                 }
                 else
                 {
@@ -135,7 +149,7 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     renderInfo.cover = renderInfo.cover | 32;
                 }
 
-                blockRenderFunctions[block](renderInfo);
+                blockRenderFunctions[block](renderInfo, blockTextureCoords[block]);
             }
         }
     }
