@@ -11,7 +11,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 4;
+int render_distance = 3;
 
 void bindChunk(Chunk &chunk)
 {
@@ -37,7 +37,7 @@ std::vector<char> getChunkData(ChunkMap &chunkMap, glm::ivec3 pos)
     {
         for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
-            double freq = 0.04;
+            double freq = 0.005;
             double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
             int blocksInHeight = 0;
             int terrainHeight = (int)(noise * CHUNK_HEIGHT);
@@ -105,6 +105,7 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                 BLOCK block = (BLOCK)chunk.data[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
 
                 BlockRenderInfo renderInfo = {
+                    block,
                     (char)0,
                     glm::vec3((currPos.x * CHUNK_SIZE) + x, y, (currPos.z * CHUNK_SIZE) + z),
                     chunk.vertices,
@@ -149,7 +150,7 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
                     renderInfo.cover = renderInfo.cover | 32;
                 }
 
-                blockRenderFunctions[block](renderInfo, blockTextureCoords[block]);
+                blockRenderFunctions[block](renderInfo);
             }
         }
     }

@@ -5,6 +5,8 @@
 #include "glError.h"
 #include "stb_image.h"
 
+#define ATLAS_SIZE 1024.f
+
 Texture::Texture(const char *filepath, int wrapType, int filterType)
 {
     GLCall(glGenTextures(1, &Id));
@@ -34,4 +36,20 @@ Texture::Texture(const char *filepath, int wrapType, int filterType)
 void Texture::bind()
 {
     GLCall(glBindTexture(GL_TEXTURE_2D, Id));
+}
+
+UVcoords getTextureCoordsFromAtlas(int row, int col)
+{
+    float tileWidthU = 16.0f / ATLAS_SIZE;
+    float tileHeightV = 16.0f / ATLAS_SIZE;
+
+    float startU = col * tileWidthU;
+    float startV = row * tileHeightV;
+
+    float u1 = startU;
+    float v1 = startV;
+    float u2 = startU + tileWidthU;
+    float v2 = startV + tileHeightV;
+
+    return {u1, v1, u2, v2};
 }
