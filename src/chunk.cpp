@@ -27,33 +27,11 @@ void unbindChunk(Chunk &chunk)
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
-typedef struct
-{
-    float u1, v1, u2, v2;
-} UVcoords;
-
-UVcoords getUVcoords(int row, int col)
-{
-    float tileWidthU = 16.0f / 1024.0f;  // = 0.015625
-    float tileHeightV = 16.0f / 1024.0f; // = 0.015625
-
-    float startU = col * tileWidthU;  // = 3 * 0.015625 = 0.046875
-    float startV = row * tileHeightV; // = 2 * 0.015625 = 0.03125
-
-    // Texture coordinates for the quad
-    float u1 = startU;               // 0.046875
-    float v1 = startV;               // 0.03125
-    float u2 = startU + tileWidthU;  // 0.046875 + 0.015625 = 0.0625
-    float v2 = startV + tileHeightV; // 0.03125 + 0.015625 = 0.046875
-
-    return {u1, v1, u2, v2};
-}
-
 std::vector<char> getChunkData(ChunkMap &chunkMap, glm::ivec3 pos)
 {
     int blocksPerChunk = CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE;
     std::vector<char> data;
-    data.reserve(blocksPerChunk);
+    data.resize(blocksPerChunk);
 
     for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
     {
@@ -104,129 +82,60 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
 
     chunk.data = getChunkData(chunkMap, currPos);
 
-    UVcoords grassBottom = getUVcoords(0, 0);
-    UVcoords grassSide = getUVcoords(0, 1);
-    UVcoords grassTop = getUVcoords(0, 2);
-
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
         for (int y = 0; y < CHUNK_HEIGHT; y++) // Z-axis
         {
             for (int z = 0; z < CHUNK_SIZE; z++) // Y-axis
             {
-                glm::vec3 blockPos = glm::vec3((currPos.x * CHUNK_SIZE) + x, y, (currPos.z * CHUNK_SIZE) + z);
+                BLOCK block = (BLOCK)chunk.data[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
 
-                if (chunk.data[x + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)] != BLOCK::AIR_BLOCK)
+                BlockRenderInfo renderInfo = {
+                    (char)0,
+                    glm::vec3((currPos.x * CHUNK_SIZE) + x, y, (currPos.z * CHUNK_SIZE) + z),
+                    chunk.vertices,
+                    chunk.indices,
+                    indiceOffset,
+                };
+
+                // North face
+                int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
+                if (z <= 0 || chunk.data[northIndex] == BLOCK::AIR_BLOCK)
                 {
-                    // North face
-                    int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                    if (z <= 0 || chunk.data[northIndex] == BLOCK::AIR_BLOCK)
-                    {
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
-
-                        chunk.indices.push_back(indiceOffset + 0);
-                        chunk.indices.push_back(indiceOffset + 1);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 3);
-                        chunk.indices.push_back(indiceOffset + 0);
-
-                        indiceOffset += 4;
-                    }
-                    int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                    if (z >= CHUNK_SIZE - 1 || chunk.data[southIdx] == BLOCK::AIR_BLOCK)
-                    {
-                        // South face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
-
-                        chunk.indices.push_back(indiceOffset + 0);
-                        chunk.indices.push_back(indiceOffset + 1);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 3);
-                        chunk.indices.push_back(indiceOffset + 0);
-
-                        indiceOffset += 4;
-                    }
-                    int westIdx = (x - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                    if (x <= 0 || chunk.data[westIdx] == BLOCK::AIR_BLOCK)
-                    {
-                        // West face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
-
-                        chunk.indices.push_back(indiceOffset + 0);
-                        chunk.indices.push_back(indiceOffset + 1);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 3);
-                        chunk.indices.push_back(indiceOffset + 0);
-
-                        indiceOffset += 4;
-                    }
-                    int eastIdx = (x + 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                    if (x >= CHUNK_SIZE - 1 || chunk.data[eastIdx] == BLOCK::AIR_BLOCK)
-                    {
-                        // East face
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(grassSide.u2, grassSide.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(grassSide.u1, grassSide.v1)});
-
-                        chunk.indices.push_back(indiceOffset + 0);
-                        chunk.indices.push_back(indiceOffset + 1);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 3);
-                        chunk.indices.push_back(indiceOffset + 0);
-
-                        indiceOffset += 4;
-                    }
-                    int bottomIdx = x + ((y - 1) * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                    if (y <= 0 || chunk.data[bottomIdx] == BLOCK::AIR_BLOCK)
-                    {
-                        // Bottom face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(grassBottom.u1, grassBottom.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(grassBottom.u2, grassBottom.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(grassBottom.u2, grassBottom.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(grassBottom.u1, grassBottom.v2)});
-
-                        chunk.indices.push_back(indiceOffset + 0);
-                        chunk.indices.push_back(indiceOffset + 1);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 3);
-                        chunk.indices.push_back(indiceOffset + 0);
-
-                        indiceOffset += 4;
-                    }
-                    int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
-                    if (y >= CHUNK_HEIGHT - 1 || chunk.data[topIdx] == BLOCK::AIR_BLOCK)
-                    {
-                        // Top face
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(grassTop.u1, grassTop.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(grassTop.u2, grassTop.v2)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(grassTop.u2, grassTop.v1)});
-                        chunk.vertices.push_back({blockPos + glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(grassTop.u1, grassTop.v1)});
-
-                        chunk.indices.push_back(indiceOffset + 0);
-                        chunk.indices.push_back(indiceOffset + 1);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 2);
-                        chunk.indices.push_back(indiceOffset + 3);
-                        chunk.indices.push_back(indiceOffset + 0);
-
-                        indiceOffset += 4;
-                    }
+                    renderInfo.cover = renderInfo.cover | 1;
                 }
+                // South face
+                int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
+                if (z >= CHUNK_SIZE - 1 || chunk.data[southIdx] == BLOCK::AIR_BLOCK)
+                {
+                    renderInfo.cover = renderInfo.cover | 2;
+                }
+                // West face
+                int westIdx = (x - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+                if (x <= 0 || chunk.data[westIdx] == BLOCK::AIR_BLOCK)
+                {
+                    renderInfo.cover = renderInfo.cover | 4;
+                }
+                // East face
+                int eastIdx = (x + 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+                if (x >= CHUNK_SIZE - 1 || chunk.data[eastIdx] == BLOCK::AIR_BLOCK)
+                {
+                    renderInfo.cover = renderInfo.cover | 8;
+                }
+                // Bottom face
+                int bottomIdx = x + ((y - 1) * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+                if (y <= 0 || chunk.data[bottomIdx] == BLOCK::AIR_BLOCK)
+                {
+                    renderInfo.cover = renderInfo.cover | 16;
+                }
+                // Top face
+                int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
+                if (y >= CHUNK_HEIGHT - 1 || chunk.data[topIdx] == BLOCK::AIR_BLOCK)
+                {
+                    renderInfo.cover = renderInfo.cover | 32;
+                }
+
+                blockRenderFunctions[block](renderInfo);
             }
         }
     }
