@@ -1,5 +1,5 @@
 #include "chunk/chunkData.h"
-#include "chunk.h"
+#include "chunk/chunkMesh.h"
 #include "block.h"
 
 #include <iostream>
@@ -23,7 +23,7 @@ void generateChunkData(ChunkDataMap &chunks, glm::ivec2 chunkPos)
             double freq = 0.005;
             double noise = perlin.octave2D_01(freq * (chunkPos.x * CHUNK_SIZE + i), freq * (chunkPos.y * CHUNK_SIZE + k), 8);
             int blocksInHeight = 0;
-            int terrainHeight = (int)(noise * CHUNK_HEIGHT);
+            int terrainHeight = (int)(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
 
             for (int j = CHUNK_HEIGHT - 1; j >= 0; j--) // Y-axis
             {

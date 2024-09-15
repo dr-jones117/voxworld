@@ -14,9 +14,10 @@
 #include "shader.h"
 #include "glError.h"
 #include "texture.h"
-#include "chunk.h"
 #include "player.h"
+
 #include "chunk/chunkData.h"
+#include "chunk/chunkMesh.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#include "chunk.h"
+#include "chunk/chunkMesh.h"
 #include "glError.h"
 #include "PerlinNoise.hpp"
 #include "block.h"

@@ -1,5 +1,7 @@
 #pragma once
+
 #include "camera.h"
+#include "chunk/chunkData.h"
 
 class Player
 {
