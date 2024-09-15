@@ -13,7 +13,6 @@ bool chunkDataExists(ChunkDataMap &chunks, glm::ivec2 chunkPos)
 
 void generateChunkData(ChunkDataMap &chunks, glm::ivec2 chunkPos)
 {
-    std::cout << "pos: " << chunkPos.x << "," << chunkPos.y << std::endl;
     std::vector<char> data;
     data.resize(BLOCKS_PER_CHUNK);
 
