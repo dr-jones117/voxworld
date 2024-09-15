@@ -16,6 +16,7 @@
 #include "texture.h"
 #include "chunk.h"
 #include "player.h"
+#include "chunk/chunkData.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -134,7 +135,8 @@ int main(void)
     Texture atlas = Texture("./res/textures/texture-atlas.jpg", GL_REPEAT, GL_NEAREST);
     atlas.bind();
 
-    ChunkMap chunkMap;
+    ChunkDataMap chunkDataMap;
+    ChunkMeshMap chunkMeshMap;
 
     // Timing variables
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -144,7 +146,11 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         frameCount++;
-        generateChunks(chunkMap, player->getChunkPos());
+
+        glm::ivec2 playerChunkPos = player->getChunkPos();
+        generateChunkDataFromPos(chunkDataMap, playerChunkPos);
+        generateChunkMeshes(chunkMeshMap, chunkDataMap, playerChunkPos);
+
         processInput(window);
         player->tick(glfwGetTime());
 
@@ -169,7 +175,7 @@ int main(void)
         int modelLoc = glGetUniformLocation(shader.Id, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        renderChunks(chunkMap);
+        renderChunkMeshes(chunkMeshMap);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -184,7 +190,7 @@ int main(void)
         if (elapsed.count() >= 1.0f)
         {
             fps = frameCount / elapsed.count();
-            std::cout << "FPS: " << fps << std::endl;
+            // std::cout << "FPS: " << fps << std::endl;
             startTime = currentTime;
             frameCount = 0;
         }

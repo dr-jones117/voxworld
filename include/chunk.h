@@ -1,14 +1,12 @@
 #pragma once
 
+#include "chunk/chunkData.h"
 #include <glm/glm.hpp>
 #include "glError.h"
 #include "shader.h"
 #include "PerlinNoise.hpp"
 #include "rendering.h"
 #include <vector>
-
-#define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 48
 
 extern int render_distance;
 
@@ -17,32 +15,26 @@ const siv::PerlinNoise perlin{seed};
 
 #include "vec3.h"
 
-class Chunk
+class ChunkMesh
 {
 public:
     glm::ivec3 pos;
-    std::vector<char> data;
     unsigned int VBO, EBO, VAO;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-
-    Chunk()
-    {
-        data.reserve(CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE);
-    }
 };
 
-typedef std::unordered_map<glm::ivec3, Chunk, Vec3Hash, Vec3Equal> ChunkMap;
+typedef std::unordered_map<glm::ivec3, ChunkMesh, Vec3Hash, Vec3Equal> ChunkMeshMap;
 
-void bindChunk(Chunk &chunk);
-void unbindChunk(Chunk &chunk);
+void bindChunk(ChunkMesh &chunkMesh);
+void unbindChunk(ChunkMesh &chunkMesh);
 
-void renderChunks(ChunkMap &chunkMap);
+void renderChunkMeshes(ChunkMeshMap &chunkMeshMap);
 
-void generateChunks(ChunkMap &chunkMap, glm::ivec3 currPos);
-void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos);
+void generateChunkMeshes(ChunkMeshMap &chunkMeshMap, ChunkDataMap &chunkDataMap, glm::ivec2 startPos);
+void generateChunkMesh(ChunkMeshMap &chunkMeshMap, ChunkDataMap &chunkDataMap, glm::ivec3 currPos);
 
-bool chunkExists(ChunkMap &chunkMap, glm::ivec3 pos);
-Chunk *getChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos);
-void removeChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos);
-void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos);
+bool chunkMeshExists(ChunkMeshMap &chunkMeshMap, glm::ivec3 pos);
+ChunkMesh *getChunkFromMap(ChunkMeshMap &chunkMeshMap, glm::ivec3 pos);
+void removeChunkFromMap(ChunkMeshMap &chunkMeshMap, glm::ivec3 pos);
+void removeUnneededChunks(ChunkMeshMap &chunkMeshMap, glm::ivec3 startPos);

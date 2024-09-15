@@ -13,76 +13,30 @@
 
 int render_distance = 3;
 
-void bindChunk(Chunk &chunk)
+void bindChunk(ChunkMesh &chunkMesh)
 {
-    GLCall(glBindVertexArray(chunk.VAO));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, chunk.VBO));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk.EBO));
+    GLCall(glBindVertexArray(chunkMesh.VAO));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, chunkMesh.VBO));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunkMesh.EBO));
 }
 
-void unbindChunk(Chunk &chunk)
+void unbindChunk(ChunkMesh &chunkMesh)
 {
     GLCall(glBindVertexArray(0));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
-std::vector<char> getChunkData(ChunkMap &chunkMap, glm::ivec3 pos)
+void generateChunkMesh(ChunkMeshMap &chunkMeshMap, ChunkDataMap &chunkDataMap, glm::ivec3 currPos)
 {
-    int blocksPerChunk = CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE;
-    std::vector<char> data;
-    data.resize(blocksPerChunk);
+    ChunkMesh chunkMesh;
+    chunkMesh.pos = currPos;
 
-    for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
-    {
-        for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
-        {
-            double freq = 0.005;
-            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
-            int blocksInHeight = 0;
-            int terrainHeight = (int)(noise * CHUNK_HEIGHT);
+    GLCall(glGenVertexArrays(1, &chunkMesh.VAO));
+    GLCall(glGenBuffers(1, &chunkMesh.VBO));
+    GLCall(glGenBuffers(1, &chunkMesh.EBO));
 
-            for (int j = CHUNK_HEIGHT - 1; j >= 0; j--) // Y-axis
-            {
-                if (blocksInHeight >= 1)
-                {
-                    if (blocksInHeight >= 3)
-                    {
-                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
-                    }
-                    else
-                    {
-                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::DIRT_BLOCK;
-                    }
-
-                    blocksInHeight++;
-                }
-                else if (j < terrainHeight)
-                {
-                    data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
-                    blocksInHeight++;
-                }
-                else
-                {
-                    data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
-                }
-            }
-        }
-    }
-
-    return data;
-}
-
-void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
-{
-    Chunk chunk;
-    chunk.pos = currPos;
-
-    GLCall(glGenVertexArrays(1, &chunk.VAO));
-    GLCall(glGenBuffers(1, &chunk.VBO));
-    GLCall(glGenBuffers(1, &chunk.EBO));
-
-    bindChunk(chunk);
+    bindChunk(chunkMesh);
 
     GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0));
     GLCall(glEnableVertexAttribArray(0));
@@ -90,11 +44,20 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
     GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)sizeof(glm::vec3)));
     GLCall(glEnableVertexAttribArray(1));
 
-    unbindChunk(chunk);
+    unbindChunk(chunkMesh);
 
     unsigned int indiceOffset = 0;
 
-    chunk.data = getChunkData(chunkMap, currPos);
+    auto chunkData = getChunkDataIfExists(chunkDataMap, glm::ivec2(currPos.x, currPos.z));
+    auto northChunkData = getChunkDataIfExists(chunkDataMap, glm::ivec2(currPos.x, currPos.z - 1));
+    auto southChunkData = getChunkDataIfExists(chunkDataMap, glm::ivec2(currPos.x, currPos.z + 1));
+    auto westChunkData = getChunkDataIfExists(chunkDataMap, glm::ivec2(currPos.x + 1, currPos.z));
+    auto eastChunkData = getChunkDataIfExists(chunkDataMap, glm::ivec2(currPos.x - 1, currPos.z));
+
+    // if (northChunkData.size() == 0 || southChunkData.size() == 0 || westChunkData.size() == 0 || eastChunkData.size() == 0)
+    // {
+    //     return;
+    // }
 
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
@@ -102,50 +65,58 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
         {
             for (int z = 0; z < CHUNK_SIZE; z++) // Y-axis
             {
-                BLOCK block = (BLOCK)chunk.data[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
+                BLOCK block = (BLOCK)chunkData[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
 
                 BlockRenderInfo renderInfo = {
                     block,
                     (char)0,
                     glm::vec3((currPos.x * CHUNK_SIZE) + x, y, (currPos.z * CHUNK_SIZE) + z),
-                    chunk.vertices,
-                    chunk.indices,
+                    chunkMesh.vertices,
+                    chunkMesh.indices,
                     indiceOffset,
                 };
 
                 // North face
                 int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (z <= 0 || chunk.data[northIndex] == BLOCK::AIR_BLOCK)
+                if (z <= 0)
+                {
+                    if (northChunkData[x + (y * CHUNK_SIZE) + ((CHUNK_SIZE - 1) * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
+                    {
+                        renderInfo.cover = renderInfo.cover | 1;
+                    }
+                }
+                else if (chunkData[northIndex] == BLOCK::AIR_BLOCK)
                 {
                     renderInfo.cover = renderInfo.cover | 1;
                 }
+
                 // South face
                 int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (z >= CHUNK_SIZE - 1 || chunk.data[southIdx] == BLOCK::AIR_BLOCK)
+                if (z >= CHUNK_SIZE - 1 || chunkData[southIdx] == BLOCK::AIR_BLOCK)
                 {
                     renderInfo.cover = renderInfo.cover | 2;
                 }
                 // West face
                 int westIdx = (x - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (x <= 0 || chunk.data[westIdx] == BLOCK::AIR_BLOCK)
+                if (x <= 0 || chunkData[westIdx] == BLOCK::AIR_BLOCK)
                 {
                     renderInfo.cover = renderInfo.cover | 4;
                 }
                 // East face
                 int eastIdx = (x + 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (x >= CHUNK_SIZE - 1 || chunk.data[eastIdx] == BLOCK::AIR_BLOCK)
+                if (x >= CHUNK_SIZE - 1 || chunkData[eastIdx] == BLOCK::AIR_BLOCK)
                 {
                     renderInfo.cover = renderInfo.cover | 8;
                 }
                 // Bottom face
                 int bottomIdx = x + ((y - 1) * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (y <= 0 || chunk.data[bottomIdx] == BLOCK::AIR_BLOCK)
+                if (y <= 0 || chunkData[bottomIdx] == BLOCK::AIR_BLOCK)
                 {
                     renderInfo.cover = renderInfo.cover | 16;
                 }
                 // Top face
                 int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
-                if (y >= CHUNK_HEIGHT - 1 || chunk.data[topIdx] == BLOCK::AIR_BLOCK)
+                if (y >= CHUNK_HEIGHT - 1 || chunkData[topIdx] == BLOCK::AIR_BLOCK)
                 {
                     renderInfo.cover = renderInfo.cover | 32;
                 }
@@ -155,14 +126,14 @@ void generateChunk(ChunkMap &chunkMap, glm::ivec3 currPos)
         }
     }
 
-    chunkMap[currPos] = chunk;
+    chunkMeshMap[currPos] = chunkMesh;
 }
 
-void renderChunks(ChunkMap &chunkMap)
+void renderChunkMeshes(ChunkMeshMap &chunkMeshMap)
 {
-    for (const auto &pair : chunkMap)
+    for (const auto &pair : chunkMeshMap)
     {
-        Chunk chunk = pair.second;
+        ChunkMesh chunk = pair.second;
         bindChunk(chunk);
 
         GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunk.vertices.size(), &chunk.vertices.front(), GL_STATIC_DRAW));
@@ -173,27 +144,27 @@ void renderChunks(ChunkMap &chunkMap)
     }
 }
 
-bool chunkExists(ChunkMap &chunkMap, glm::ivec3 pos)
+bool chunkMeshExists(ChunkMeshMap &chunkMeshMap, glm::ivec3 pos)
 {
-    if (chunkMap.find(pos) == chunkMap.end())
+    if (chunkMeshMap.find(pos) == chunkMeshMap.end())
         return false;
     return true;
 }
 
-void removeChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos)
+void removeChunkFromMap(ChunkMeshMap &chunkMeshMap, glm::ivec3 pos)
 {
-    if (chunkExists(chunkMap, pos))
+    if (chunkMeshExists(chunkMeshMap, pos))
     {
-        chunkMap.erase(pos);
+        chunkMeshMap.erase(pos);
     }
 }
 
-void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
+void removeUnneededChunks(ChunkMeshMap &chunkMeshMap, glm::ivec3 startPos)
 {
     std::vector<glm::ivec3> chunkPosToRemove;
-    for (const auto &pair : chunkMap)
+    for (const auto &pair : chunkMeshMap)
     {
-        Chunk chunk = pair.second;
+        ChunkMesh chunk = pair.second;
         glm::vec3 vector = chunk.pos - startPos;
         if ((int)glm::length(vector) > (render_distance + 3))
         {
@@ -203,20 +174,20 @@ void removeUnneededChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
 
     for (const auto &pos : chunkPosToRemove)
     {
-        removeChunkFromMap(chunkMap, pos);
+        removeChunkFromMap(chunkMeshMap, pos);
     }
 }
 
-void generateChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
+void generateChunkMeshes(ChunkMeshMap &chunkMeshMap, ChunkDataMap &chunkDataMap, glm::ivec2 startPos)
 {
     int x = startPos.x;
     int y = 0;
-    int z = startPos.z;
+    int z = startPos.y;
 
     glm::ivec3 currPos = glm::ivec3(x, y, z);
-    if (!chunkExists(chunkMap, currPos))
+    if (!chunkMeshExists(chunkMeshMap, currPos))
     {
-        generateChunk(chunkMap, currPos);
+        generateChunkMesh(chunkMeshMap, chunkDataMap, currPos);
     }
 
     for (int i = 1; i <= render_distance; i++)
@@ -225,48 +196,48 @@ void generateChunks(ChunkMap &chunkMap, glm::ivec3 startPos)
         for (int j = 0; j < i * 2; j++)
         {
             currPos = glm::ivec3(x - i + j, y, z + i);
-            if (!chunkExists(chunkMap, currPos))
+            if (!chunkMeshExists(chunkMeshMap, currPos))
             {
-                generateChunk(chunkMap, currPos);
+                generateChunkMesh(chunkMeshMap, chunkDataMap, currPos);
             }
         }
         // start top right
         for (int j = 0; j < i * 2; j++)
         {
             currPos = glm::ivec3(x + i, y, z + i - j);
-            if (!chunkExists(chunkMap, currPos))
+            if (!chunkMeshExists(chunkMeshMap, currPos))
             {
-                generateChunk(chunkMap, currPos);
+                generateChunkMesh(chunkMeshMap, chunkDataMap, currPos);
             }
         }
         // start bottom right
         for (int j = 0; j < i * 2; j++)
         {
             currPos = glm::ivec3(x + i - j, y, z - i);
-            if (!chunkExists(chunkMap, currPos))
+            if (!chunkMeshExists(chunkMeshMap, currPos))
             {
-                generateChunk(chunkMap, currPos);
+                generateChunkMesh(chunkMeshMap, chunkDataMap, currPos);
             }
         }
         // start bottom left
         for (int j = 0; j < i * 2; j++)
         {
             currPos = glm::ivec3(x - i, y, z - i + j);
-            if (!chunkExists(chunkMap, currPos))
+            if (!chunkMeshExists(chunkMeshMap, currPos))
             {
-                generateChunk(chunkMap, currPos);
+                generateChunkMesh(chunkMeshMap, chunkDataMap, currPos);
             }
         }
     }
 
-    removeUnneededChunks(chunkMap, startPos);
+    removeUnneededChunks(chunkMeshMap, glm::ivec3(startPos.x, 0, startPos.y));
 }
 
-Chunk *getChunkFromMap(ChunkMap &chunkMap, glm::ivec3 pos)
+ChunkMesh *getChunkFromMap(ChunkMeshMap &chunkMeshMap, glm::ivec3 pos)
 {
-    if (!chunkExists(chunkMap, pos))
+    if (!chunkMeshExists(chunkMeshMap, pos))
     {
         return nullptr;
     }
-    return &chunkMap.at(pos);
+    return &chunkMeshMap.at(pos);
 }

@@ -20,4 +20,20 @@ struct Vec3Equal
     }
 };
 
+struct Vec2Hash
+{
+    std::size_t operator()(const glm::ivec2 &v) const noexcept
+    {
+        return std::hash<float>()(v.x) ^ std::hash<float>()(v.y);
+    }
+};
+
+struct Vec2Equal
+{
+    bool operator()(const glm::ivec2 &v1, const glm::ivec2 &v2) const
+    {
+        return v1.x == v2.x && v1.y == v2.y;
+    }
+};
+
 #endif

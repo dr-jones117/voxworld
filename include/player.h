@@ -17,10 +17,10 @@ public:
         return camera->getPos();
     }
 
-    glm::ivec3 getChunkPos()
+    glm::ivec2 getChunkPos()
     {
         auto pos = camera->getPos();
-        return glm::ivec3((int)(pos.x / CHUNK_SIZE), (int)(pos.y / CHUNK_SIZE), (int)(pos.z / CHUNK_SIZE));
+        return glm::ivec2((int)(pos.x / CHUNK_SIZE), (int)(pos.z / CHUNK_SIZE));
     }
 
     glm::mat4 getView()
