@@ -14,6 +14,7 @@ public:
     void generateNewChunks(ChunkPos chunkPos);
     void render();
     BLOCK getBlockData(glm::ivec3 blockPos);
+    void removeBlock(glm::ivec3 blockPos);
 
 private:
     ChunkDataMap chunkDataMap;

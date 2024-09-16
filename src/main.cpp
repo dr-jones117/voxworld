@@ -125,6 +125,10 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             //           << "y: " << currentPos.y << ", "
             //           << "z: " << currentPos.z << std::endl;
             BLOCK block = world->getBlockData(glm::ivec3((int)currentPos.x, (int)currentPos.y, (int)currentPos.z));
+            if (block != BLOCK::AIR_BLOCK)
+            {
+                world->removeBlock(glm::ivec3((int)currentPos.x, (int)currentPos.y, (int)currentPos.z));
+            }
             std::cout << std::endl;
         }
 
@@ -153,7 +157,7 @@ int main(void)
 
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     glfwMakeContextCurrent(window);
@@ -182,12 +186,12 @@ int main(void)
     int frameCount = 0;
     float fps = 0.0f;
 
-    ChunkPos playerChunkPos = player->getChunkPos();
-    world->generateNewChunks(playerChunkPos);
-
     while (!glfwWindowShouldClose(window))
     {
         frameCount++;
+
+        ChunkPos playerChunkPos = player->getChunkPos();
+        world->generateNewChunks(playerChunkPos);
 
         processInput(window);
         player->tick(glfwGetTime());
