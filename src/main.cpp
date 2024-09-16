@@ -18,6 +18,7 @@
 
 #include "world/chunkData.h"
 #include "world/chunkMesh.h"
+#include "world/chunkPos.h"
 #include "world/world.h"
 
 #include <glm/glm.hpp>
@@ -26,6 +27,8 @@
 
 #include <chrono>
 #include <rendering.h>
+
+#define SHOW_FPS false
 
 int screenWidth = 1280, screenHeight = 720;
 Player *player = new Player();
@@ -98,6 +101,34 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
+        auto fVec = player->getFront(); // Direction of the ray
+        auto pos = player->getPos();    // Origin of the ray
+
+        // Print the initial position
+        std::cout << "Initial position: "
+                  << "x: " << pos.x << ", "
+                  << "y: " << pos.y << ", "
+                  << "z: " << pos.z << std::endl;
+
+        float stepSize = 1.0f;    // Define the step size (distance between checks)
+        float maxDistance = 5.0f; // Define the maximum distance to check
+
+        // Iterate along the ray direction in steps
+        for (float distance = 0.0f; distance <= maxDistance; distance += stepSize)
+        {
+            // Compute the current position along the ray
+            glm::vec3 currentPos = pos + fVec * distance;
+
+            // Print the coordinates
+            // std::cout << "Step at distance " << distance << ": "
+            //           << "x: " << currentPos.x << ", "
+            //           << "y: " << currentPos.y << ", "
+            //           << "z: " << currentPos.z << std::endl;
+            BLOCK block = world->getBlockData(glm::ivec3((int)currentPos.x, (int)currentPos.y, (int)currentPos.z));
+            std::cout << std::endl;
+        }
+
+        std::cout << "\n\n";
     }
 }
 
@@ -151,12 +182,12 @@ int main(void)
     int frameCount = 0;
     float fps = 0.0f;
 
+    ChunkPos playerChunkPos = player->getChunkPos();
+    world->generateNewChunks(playerChunkPos);
+
     while (!glfwWindowShouldClose(window))
     {
         frameCount++;
-
-        glm::ivec2 playerChunkPos = player->getChunkPos();
-        world->generateNewChunks({playerChunkPos.x, playerChunkPos.y});
 
         processInput(window);
         player->tick(glfwGetTime());
@@ -193,7 +224,7 @@ int main(void)
 
         glm::vec3 playerPos = player->getPos();
         // std::cout << "Chunk: (" << playerPos.x << ", " << playerPos.y << ", " << playerPos.z << ") " << std::endl;
-
+#if SHOW_FPS
         if (elapsed.count() >= 1.0f)
         {
             fps = frameCount / elapsed.count();
@@ -201,12 +232,14 @@ int main(void)
             startTime = currentTime;
             frameCount = 0;
         }
+#endif
     }
 
     shader.deleteProgram();
 
     glfwDestroyWindow(window);
     delete player;
+    delete world;
 
     glfwTerminate();
     exit(EXIT_SUCCESS);

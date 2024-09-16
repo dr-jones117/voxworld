@@ -2,6 +2,7 @@
 
 #include "world/chunkData.h"
 #include "world/chunkMesh.h"
+#include "block.h"
 
 class World
 {
@@ -10,16 +11,9 @@ public:
     {
     }
 
-    void generateNewChunks(ChunkPos chunkPos)
-    {
-        generateChunkDataFromPos(chunkPos);
-        generateChunkMeshes(chunkPos);
-    }
-
-    void render()
-    {
-        renderChunkMeshes();
-    }
+    void generateNewChunks(ChunkPos chunkPos);
+    void render();
+    BLOCK getBlockData(glm::ivec3 blockPos);
 
 private:
     ChunkDataMap chunkDataMap;
@@ -28,7 +22,7 @@ private:
     // chunk data
     void generateChunkDataFromPos(ChunkPos pos);
     void generateChunkData(ChunkPos pos);
-    std::vector<char> getChunkDataIfExists(ChunkPos pos);
+    std::vector<char> &getChunkDataIfExists(ChunkPos pos);
     bool chunkDataExists(ChunkPos chunkPos);
 
     void removeChunkDataFromMap(ChunkPos pos);

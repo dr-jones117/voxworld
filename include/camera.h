@@ -37,6 +37,7 @@ public:
     void tick(double currentTime);
     glm::mat4 getView();
     glm::vec3 getPos();
+    glm::vec3 getFront();
 
     void setForward(bool setter);
     void setBackward(bool setter);

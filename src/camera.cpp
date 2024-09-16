@@ -62,6 +62,11 @@ glm::mat4 Camera::getView()
     return view;
 }
 
+glm::vec3 Camera::getFront()
+{
+    return cameraFront;
+}
+
 void Camera::tick(double currentTime)
 {
     speed = baseSpeed * deltaTime;

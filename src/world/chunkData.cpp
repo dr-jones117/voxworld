@@ -57,13 +57,10 @@ void World::generateChunkData(ChunkPos pos)
     chunkDataMap[pos] = data;
 }
 
-std::vector<char> World::getChunkDataIfExists(ChunkPos pos)
+std::vector<char> &World::getChunkDataIfExists(ChunkPos pos)
 {
     if (chunkDataExists(pos))
-    {
         return chunkDataMap[pos];
-    }
-    return {};
 }
 
 void World::removeChunkDataFromMap(ChunkPos pos)
