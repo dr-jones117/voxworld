@@ -1,7 +1,7 @@
 #include "world/chunkData.h"
 #include "world/chunkMesh.h"
+#include "world/world.h"
 #include "block.h"
-#include "world.h"
 
 #include <iostream>
 
@@ -59,7 +59,7 @@ void World::generateChunkData(ChunkPos pos)
 
 std::vector<char> World::getChunkDataIfExists(ChunkPos pos)
 {
-    if (chunkDataExists(chunkDataMap, pos))
+    if (chunkDataExists(pos))
     {
         return chunkDataMap[pos];
     }
@@ -68,13 +68,13 @@ std::vector<char> World::getChunkDataIfExists(ChunkPos pos)
 
 void World::removeChunkDataFromMap(ChunkPos pos)
 {
-    if (chunkDataExists(chunkDataMap, pos))
+    if (chunkDataExists(pos))
     {
         chunkDataMap.erase(pos);
     }
 }
 
-void World::removeUnneededChunks(ChunkPos pos)
+void World::removeUnneededChunkData(ChunkPos pos)
 {
     std::vector<ChunkPos> chunkPosToRemove;
     for (const auto &pair : chunkDataMap)
@@ -89,7 +89,7 @@ void World::removeUnneededChunks(ChunkPos pos)
 
     for (const auto &pos : chunkPosToRemove)
     {
-        removeChunkDataFromMap(chunkDataMap, pos);
+        removeChunkDataFromMap(pos);
     }
 }
 
@@ -99,9 +99,9 @@ void World::generateChunkDataFromPos(ChunkPos pos)
     int z = pos.z;
 
     ChunkPos currPos = pos;
-    if (!chunkDataExists(chunkDataMap, currPos))
+    if (!chunkDataExists(currPos))
     {
-        generateChunkData(chunkDataMap, currPos);
+        generateChunkData(currPos);
     }
 
     for (int i = 1; i <= render_distance + 1; i++)
@@ -110,39 +110,39 @@ void World::generateChunkDataFromPos(ChunkPos pos)
         for (int j = 0; j < i * 2; j++)
         {
             currPos = {x - i + j, z + i};
-            if (!chunkDataExists(chunkDataMap, currPos))
+            if (!chunkDataExists(currPos))
             {
-                generateChunkData(chunkDataMap, currPos);
+                generateChunkData(currPos);
             }
         }
         // start top right
         for (int j = 0; j < i * 2; j++)
         {
             currPos = {x + i, z + i - j};
-            if (!chunkDataExists(chunkDataMap, currPos))
+            if (!chunkDataExists(currPos))
             {
-                generateChunkData(chunkDataMap, currPos);
+                generateChunkData(currPos);
             }
         }
         // start bottom right
         for (int j = 0; j < i * 2; j++)
         {
             currPos = {x + i - j, z - i};
-            if (!chunkDataExists(chunkDataMap, currPos))
+            if (!chunkDataExists(currPos))
             {
-                generateChunkData(chunkDataMap, currPos);
+                generateChunkData(currPos);
             }
         }
         // start bottom left
         for (int j = 0; j < i * 2; j++)
         {
             currPos = {x - i, z - i + j};
-            if (!chunkDataExists(chunkDataMap, currPos))
+            if (!chunkDataExists(currPos))
             {
-                generateChunkData(chunkDataMap, currPos);
+                generateChunkData(currPos);
             }
         }
     }
 
-    removeUnneededChunks(chunkDataMap, pos);
+    removeUnneededChunkData(pos);
 }

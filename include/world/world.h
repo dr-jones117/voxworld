@@ -1,7 +1,7 @@
 #pragma once
 
-#include "world/chunkMesh.h"
 #include "world/chunkData.h"
+#include "world/chunkMesh.h"
 
 class World
 {
@@ -18,7 +18,7 @@ public:
 
     void render()
     {
-        renderChunkMeshes(chunkMeshMap);
+        renderChunkMeshes();
     }
 
 private:
@@ -32,7 +32,7 @@ private:
     bool chunkDataExists(ChunkPos chunkPos);
 
     void removeChunkDataFromMap(ChunkPos pos);
-    void removeUnneededChunks(ChunkPos pos);
+    void removeUnneededChunkData(ChunkPos pos);
 
     // chunk mesh
     void bindChunk(ChunkMesh &chunkMesh);
@@ -42,10 +42,8 @@ private:
     void generateChunkMeshes(ChunkPos pos);
     void generateChunkMesh(ChunkPos pos);
 
-    void renderChunkMeshes();
-
     bool chunkMeshExists(ChunkPos pos);
     void removeChunkFromMap(ChunkPos pos);
-    void removeUnneededChunks(ChunkPos pos);
-    ChunkMesh &getChunkFromMap(ChunkPos pos);
+    void removeUnneededChunkMeshes(ChunkPos pos);
+    ChunkMesh *getChunkFromMap(ChunkPos pos);
 };

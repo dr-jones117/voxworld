@@ -156,7 +156,7 @@ int main(void)
         frameCount++;
 
         glm::ivec2 playerChunkPos = player->getChunkPos();
-        world->generateNewChunks();
+        world->generateNewChunks({playerChunkPos.x, playerChunkPos.y});
 
         processInput(window);
         player->tick(glfwGetTime());
