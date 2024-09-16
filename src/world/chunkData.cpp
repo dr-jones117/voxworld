@@ -1,17 +1,18 @@
-#include "chunk/chunkData.h"
-#include "chunk/chunkMesh.h"
+#include "world/chunkData.h"
+#include "world/chunkMesh.h"
 #include "block.h"
+#include "world.h"
 
 #include <iostream>
 
-bool chunkDataExists(ChunkDataMap &chunks, glm::ivec2 chunkPos)
+bool World::chunkDataExists(ChunkPos pos)
 {
-    if (chunks.find(chunkPos) == chunks.end())
+    if (chunkDataMap.find(pos) == chunkDataMap.end())
         return false;
     return true;
 }
 
-void generateChunkData(ChunkDataMap &chunks, glm::ivec2 chunkPos)
+void World::generateChunkData(ChunkPos pos)
 {
     std::vector<char> data;
     data.resize(BLOCKS_PER_CHUNK);
@@ -21,7 +22,7 @@ void generateChunkData(ChunkDataMap &chunks, glm::ivec2 chunkPos)
         for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
             double freq = 0.005;
-            double noise = perlin.octave2D_01(freq * (chunkPos.x * CHUNK_SIZE + i), freq * (chunkPos.y * CHUNK_SIZE + k), 8);
+            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
             int blocksInHeight = 0;
             int terrainHeight = (int)(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
 
@@ -53,54 +54,54 @@ void generateChunkData(ChunkDataMap &chunks, glm::ivec2 chunkPos)
         }
     }
 
-    chunks[chunkPos] = data;
+    chunkDataMap[pos] = data;
 }
 
-std::vector<char> getChunkDataIfExists(ChunkDataMap &chunks, glm::ivec2 chunkPos)
+std::vector<char> World::getChunkDataIfExists(ChunkPos pos)
 {
-    if (chunkDataExists(chunks, chunkPos))
+    if (chunkDataExists(chunkDataMap, pos))
     {
-        return chunks[chunkPos];
+        return chunkDataMap[pos];
     }
     return {};
 }
 
-void removeChunkDataFromMap(ChunkDataMap &chunks, glm::ivec2 chunkPos)
+void World::removeChunkDataFromMap(ChunkPos pos)
 {
-    if (chunkDataExists(chunks, chunkPos))
+    if (chunkDataExists(chunkDataMap, pos))
     {
-        chunks.erase(chunkPos);
+        chunkDataMap.erase(pos);
     }
 }
 
-void removeUnneededChunks(ChunkDataMap &chunks, glm::ivec2 startChunkPos)
+void World::removeUnneededChunks(ChunkPos pos)
 {
-    std::vector<glm::ivec2> chunkPosToRemove;
-    for (const auto &pair : chunks)
+    std::vector<ChunkPos> chunkPosToRemove;
+    for (const auto &pair : chunkDataMap)
     {
-        glm::ivec2 pos = pair.first;
-        glm::vec2 vector = pos - startChunkPos;
-        if ((int)glm::length(vector) > (render_distance + 4))
+        ChunkPos currPos = pair.first;
+        glm::vec2 vector = glm::vec2(currPos.x - pos.x, currPos.z - pos.z);
+        if ((int)glm::length(vector) > (render_distance + 3))
         {
-            chunkPosToRemove.push_back(pos);
+            chunkPosToRemove.push_back(currPos);
         }
     }
 
     for (const auto &pos : chunkPosToRemove)
     {
-        removeChunkDataFromMap(chunks, pos);
+        removeChunkDataFromMap(chunkDataMap, pos);
     }
 }
 
-void generateChunkDataFromPos(ChunkDataMap &chunks, glm::ivec2 startPos)
+void World::generateChunkDataFromPos(ChunkPos pos)
 {
-    int x = startPos.x;
-    int z = startPos.y;
+    int x = pos.x;
+    int z = pos.z;
 
-    glm::ivec2 currPos = startPos;
-    if (!chunkDataExists(chunks, currPos))
+    ChunkPos currPos = pos;
+    if (!chunkDataExists(chunkDataMap, currPos))
     {
-        generateChunkData(chunks, currPos);
+        generateChunkData(chunkDataMap, currPos);
     }
 
     for (int i = 1; i <= render_distance + 1; i++)
@@ -108,40 +109,40 @@ void generateChunkDataFromPos(ChunkDataMap &chunks, glm::ivec2 startPos)
         // start top left
         for (int j = 0; j < i * 2; j++)
         {
-            currPos = glm::ivec2(x - i + j, z + i);
-            if (!chunkDataExists(chunks, currPos))
+            currPos = {x - i + j, z + i};
+            if (!chunkDataExists(chunkDataMap, currPos))
             {
-                generateChunkData(chunks, currPos);
+                generateChunkData(chunkDataMap, currPos);
             }
         }
         // start top right
         for (int j = 0; j < i * 2; j++)
         {
-            currPos = glm::ivec2(x + i, z + i - j);
-            if (!chunkDataExists(chunks, currPos))
+            currPos = {x + i, z + i - j};
+            if (!chunkDataExists(chunkDataMap, currPos))
             {
-                generateChunkData(chunks, currPos);
+                generateChunkData(chunkDataMap, currPos);
             }
         }
         // start bottom right
         for (int j = 0; j < i * 2; j++)
         {
-            currPos = glm::ivec2(x + i - j, z - i);
-            if (!chunkDataExists(chunks, currPos))
+            currPos = {x + i - j, z - i};
+            if (!chunkDataExists(chunkDataMap, currPos))
             {
-                generateChunkData(chunks, currPos);
+                generateChunkData(chunkDataMap, currPos);
             }
         }
         // start bottom left
         for (int j = 0; j < i * 2; j++)
         {
-            currPos = glm::ivec2(x - i, z - i + j);
-            if (!chunkDataExists(chunks, currPos))
+            currPos = {x - i, z - i + j};
+            if (!chunkDataExists(chunkDataMap, currPos))
             {
-                generateChunkData(chunks, currPos);
+                generateChunkData(chunkDataMap, currPos);
             }
         }
     }
 
-    removeUnneededChunks(chunks, startPos);
+    removeUnneededChunks(chunkDataMap, pos);
 }

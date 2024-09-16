@@ -16,8 +16,9 @@
 #include "texture.h"
 #include "player.h"
 
-#include "chunk/chunkData.h"
-#include "chunk/chunkMesh.h"
+#include "world/chunkData.h"
+#include "world/chunkMesh.h"
+#include "world/world.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,6 +29,7 @@
 
 int screenWidth = 1280, screenHeight = 720;
 Player *player = new Player();
+World *world = new World();
 
 void error_callback(int error, const char *description)
 {
@@ -92,6 +94,13 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     player->updateLookCoords(xpos, ypos);
 }
 
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+    }
+}
+
 int main(void)
 {
     glfwSetErrorCallback(error_callback);
@@ -118,6 +127,7 @@ int main(void)
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
+    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)mouse_button_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -136,9 +146,6 @@ int main(void)
     Texture atlas = Texture("./res/textures/texture-atlas.jpg", GL_REPEAT, GL_NEAREST);
     atlas.bind();
 
-    ChunkDataMap chunkDataMap;
-    ChunkMeshMap chunkMeshMap;
-
     // Timing variables
     auto startTime = std::chrono::high_resolution_clock::now();
     int frameCount = 0;
@@ -149,8 +156,7 @@ int main(void)
         frameCount++;
 
         glm::ivec2 playerChunkPos = player->getChunkPos();
-        generateChunkDataFromPos(chunkDataMap, playerChunkPos);
-        generateChunkMeshes(chunkMeshMap, chunkDataMap, playerChunkPos);
+        world->generateNewChunks();
 
         processInput(window);
         player->tick(glfwGetTime());
@@ -176,7 +182,7 @@ int main(void)
         int modelLoc = glGetUniformLocation(shader.Id, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        renderChunkMeshes(chunkMeshMap);
+        world->render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
