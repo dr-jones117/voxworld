@@ -97,92 +97,6 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     player->updateLookCoords(xpos, ypos);
 }
 
-// Raycasting function with face detection
-bool raycast(float startX, float startY, float startZ,
-             float dirX, float dirY, float dirZ,
-             float &hitX, float &hitY, float &hitZ,
-             char &hitFace)
-{
-    // Normalize the direction vector
-    float length = std::sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-    dirX /= length;
-    dirY /= length;
-    dirZ /= length;
-
-    // Initialize ray position and step sizes
-    int x = static_cast<int>(startX);
-    int y = static_cast<int>(startY);
-    int z = static_cast<int>(startZ);
-
-    float tMaxX = (dirX > 0) ? ((x + 1 - startX) / dirX) : ((x - startX) / dirX);
-    float tMaxY = (dirY > 0) ? ((y + 1 - startY) / dirY) : ((y - startY) / dirY);
-    float tMaxZ = (dirZ > 0) ? ((z + 1 - startZ) / dirZ) : ((z - startZ) / dirZ);
-
-    float tDeltaX = (dirX > 0) ? (1.0f / dirX) : (-1.0f / dirX);
-    float tDeltaY = (dirY > 0) ? (1.0f / dirY) : (-1.0f / dirY);
-    float tDeltaZ = (dirZ > 0) ? (1.0f / dirZ) : (-1.0f / dirZ);
-
-    int i = 0;
-    // Iterate through the voxel grid
-    while (i < 10)
-    {
-        // Check if the current voxel is solid
-        if (world->getBlockData(glm::ivec3(x, y, z)) != BLOCK::AIR_BLOCK)
-        {
-            hitX = static_cast<float>(x);
-            hitY = static_cast<float>(y);
-            hitZ = static_cast<float>(z);
-
-            // Determine which face was hit
-            if (tMaxX < tMaxY && tMaxX < tMaxZ)
-            {
-                hitFace = (dirX > 0) ? 'R' : 'L'; // Right or Left face
-            }
-            else if (tMaxY < tMaxZ)
-            {
-                hitFace = (dirY > 0) ? 'U' : 'D'; // Up or Down face
-            }
-            else
-            {
-                hitFace = (dirZ > 0) ? 'F' : 'B'; // Front or Back face
-            }
-            return true;
-        }
-
-        // Move to the next voxel
-        if (tMaxX < tMaxY)
-        {
-            if (tMaxX < tMaxZ)
-            {
-                x += (dirX > 0) ? 1 : -1;
-                tMaxX += tDeltaX;
-            }
-            else
-            {
-                z += (dirZ > 0) ? 1 : -1;
-                tMaxZ += tDeltaZ;
-            }
-        }
-        else
-        {
-            if (tMaxY < tMaxZ)
-            {
-                y += (dirY > 0) ? 1 : -1;
-                tMaxY += tDeltaY;
-            }
-            else
-            {
-                z += (dirZ > 0) ? 1 : -1;
-                tMaxZ += tDeltaZ;
-            }
-        }
-        i++;
-    }
-
-    // If no solid voxel was hit
-    return false;
-}
-
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -196,8 +110,8 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
                   << "y: " << pos.y << ", "
                   << "z: " << pos.z << std::endl;
 
-        float stepSize = 1.0f;    // Define the step size (distance between checks)
-        float maxDistance = 8.0f; // Define the maximum distance to check
+        float stepSize = 0.1f;    // Define the step size (distance between checks)
+        float maxDistance = 5.0f; // Define the maximum distance to check
 
         // Iterate along the ray direction in steps
         for (float distance = 0.0f; distance <= maxDistance; distance += stepSize)
@@ -206,17 +120,17 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             glm::vec3 currentPos = pos + fVec * distance;
 
             // Print the coordinates
-            // std::cout << "Step at distance " << distance << ": "
-            //           << "x: " << currentPos.x << ", "
-            //           << "y: " << currentPos.y << ", "
-            //           << "z: " << currentPos.z << std::endl;
+            std::cout << "Step at distance " << distance << ": "
+                      << "x: " << currentPos.x << ", "
+                      << "y: " << currentPos.y << ", "
+                      << "z: " << currentPos.z << std::endl;
             BLOCK block = world->getBlockData(glm::ivec3((int)currentPos.x, (int)currentPos.y, (int)currentPos.z));
             if (block != BLOCK::AIR_BLOCK)
             {
                 world->removeBlock(glm::ivec3((int)currentPos.x, (int)currentPos.y, (int)currentPos.z));
                 break;
+                std::cout << "\n\n";
             }
-            std::cout << std::endl;
         }
 
         std::cout << "\n\n";

@@ -40,9 +40,9 @@ BLOCK World::getBlockData(glm::ivec3 blockPos)
     if (data.size() > 0)
     {
         BLOCK block = (BLOCK)data[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)];
-        std::cout << "Found block: " << block << std::endl
-                  << "at chunk: (" << chunkPos.x << ", " << chunkPos.z << ")" << std::endl
-                  << "at pos: (" << block_x << ", " << block_y << ", " << block_z << ")" << std::endl;
+        // std::cout << "Found block: " << block << std::endl
+        //           << "at chunk: (" << chunkPos.x << ", " << chunkPos.z << ")" << std::endl
+        //           << "at pos: (" << block_x << ", " << block_y << ", " << block_z << ")" << std::endl;
         return block;
     }
 
