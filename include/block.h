@@ -10,7 +10,8 @@ enum BLOCK
     AIR_BLOCK = 0,
     GRASS_BLOCK = 1,
     DIRT_BLOCK = 2,
-    STONE_BLOCK = 3
+    STONE_BLOCK = 3,
+    FOCUS = 4,
 };
 
 typedef struct
@@ -31,6 +32,8 @@ static std::unordered_map<BLOCK, std::vector<UVcoords>> blockTextureCoords = {
     {BLOCK::GRASS_BLOCK, {getTextureCoordsFromAtlas(0, 0), getTextureCoordsFromAtlas(0, 1), getTextureCoordsFromAtlas(0, 2)}},
     {BLOCK::DIRT_BLOCK, {getTextureCoordsFromAtlas(0, 0), getTextureCoordsFromAtlas(0, 0), getTextureCoordsFromAtlas(0, 0)}},
     {BLOCK::STONE_BLOCK, {getTextureCoordsFromAtlas(0, 3), getTextureCoordsFromAtlas(0, 3), getTextureCoordsFromAtlas(0, 3)}},
+    {BLOCK::FOCUS, {getTextureCoordsFromAtlas(0, 4), getTextureCoordsFromAtlas(0, 4), getTextureCoordsFromAtlas(0, 4)}},
+
 };
 
 static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRenderFunctions = {
@@ -38,4 +41,5 @@ static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRen
     {BLOCK::GRASS_BLOCK, renderRegularBlock},
     {BLOCK::DIRT_BLOCK, renderRegularBlock},
     {BLOCK::STONE_BLOCK, renderRegularBlock},
+    {BLOCK::FOCUS, renderRegularBlock},
 };

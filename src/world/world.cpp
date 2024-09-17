@@ -7,6 +7,11 @@
 #include "world/chunkPos.h"
 #include "block.h"
 
+void World::init()
+{
+    focusMesh.init();
+}
+
 BLOCK World::getBlockData(glm::ivec3 blockPos)
 {
     int chunk_x = blockPos.x / CHUNK_SIZE;
@@ -100,4 +105,28 @@ void World::generateNewChunks(ChunkPos chunkPos)
 void World::render()
 {
     renderChunkMeshes();
+    focusMesh.draw();
+    focusMesh.reset();
+}
+
+void World::updateFocusBlock(glm::ivec3 &pos, char &face)
+{
+    unsigned int indiceOffset = 0;
+
+    std::vector<UVcoords> textureCoords = blockTextureCoords[BLOCK::FOCUS];
+    UVcoords bottomTexCoords = textureCoords[0];
+    UVcoords sideTexCoords = textureCoords[1];
+    UVcoords topTexCoords = textureCoords[2];
+
+    glm::vec3 blockPos = glm::vec3(pos.x, pos.y, pos.z);
+
+    BlockRenderInfo renderInfo = {
+        BLOCK::FOCUS,
+        face,
+        blockPos,
+        focusMesh.vertices,
+        focusMesh.indices,
+        indiceOffset};
+
+    blockRenderFunctions[BLOCK::FOCUS](renderInfo);
 }

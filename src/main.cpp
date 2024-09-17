@@ -96,46 +96,87 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
     player->updateLookCoords(xpos, ypos);
 }
+
+void removeBlock(glm::ivec3 &pos, char &face)
+{
+    world->removeBlock(pos);
+}
+
+void focusBlock(glm::ivec3 &pos, char &face)
+{
+    world->updateFocusBlock(pos, face);
+}
+
+void shoot_ray(void (*func)(glm::ivec3 &blockPos, char &face))
+{
+    auto fVec = player->getFront(); // Direction of the ray
+    auto pos = player->getPos();    // Origin of the ray
+
+    float stepSize = 0.01f;   // Define the step size (distance between checks)
+    float maxDistance = 5.0f; // Define the maximum distance to check
+
+    // Iterate along the ray direction in steps
+    for (float distance = 0.0f; distance <= maxDistance; distance += stepSize)
+    {
+        // Compute the current position along the ray
+        glm::vec3 currentPos = pos + fVec * distance;
+
+        // Cast to integer coordinates, rounding towards the origin
+        glm::ivec3 intPos = glm::ivec3(glm::floor(currentPos.x), glm::floor(currentPos.y), glm::floor(currentPos.z));
+
+        // Get block data at integer position
+        BLOCK block = world->getBlockData(intPos);
+        if (block != BLOCK::AIR_BLOCK)
+        {
+            // Calculate the hit face based on the ray direction and voxel position
+            glm::vec3 intPosVec = glm::vec3(intPos);
+            glm::vec3 hitPoint = currentPos - intPosVec;
+            std::cout << "hitPoint: " << hitPoint.x << ", " << hitPoint.y << ", " << hitPoint.z << std::endl;
+
+            float xDist = glm::abs(hitPoint.x);
+            float yDist = glm::abs(hitPoint.y);
+            float zDist = glm::abs(hitPoint.z);
+
+            char face = 0;
+            // Determine the hit face with a threshold to handle edge cases
+            if (hitPoint.x > 0.99f)
+            {
+                face = 8;
+            }
+            else if (hitPoint.y > 0.99f)
+            {
+                face = 32;
+            }
+            else if (hitPoint.z > 0.99f)
+            {
+                face = 2;
+            }
+            else if (hitPoint.x == std::min(std::min(hitPoint.x, hitPoint.y), hitPoint.z))
+            {
+                face = 4;
+            }
+            else if (hitPoint.y == std::min(std::min(hitPoint.x, hitPoint.y), hitPoint.z))
+            {
+                face = 16;
+            }
+            else if (hitPoint.z == std::min(std::min(hitPoint.x, hitPoint.y), hitPoint.z))
+            {
+                face = 1;
+            }
+
+            func(intPos, face);
+            break; // Exit the loop after detecting the block
+        }
+    }
+
+    std::cout << "\n\n";
+}
+
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        auto fVec = player->getFront(); // Direction of the ray
-        auto pos = player->getPos();    // Origin of the ray
-
-        // Print the initial position
-        std::cout << "Initial position: "
-                  << "x: " << pos.x << ", "
-                  << "y: " << pos.y << ", "
-                  << "z: " << pos.z << std::endl;
-
-        float stepSize = 0.1f;    // Define the step size (distance between checks)
-        float maxDistance = 5.0f; // Define the maximum distance to check
-
-        // Iterate along the ray direction in steps
-        for (float distance = 0.0f; distance <= maxDistance; distance += stepSize)
-        {
-            // Compute the current position along the ray
-            glm::vec3 currentPos = pos + fVec * distance;
-
-            // Cast to integer coordinates, rounding towards the origin
-            glm::ivec3 intPos = glm::ivec3(glm::floor(currentPos.x), glm::floor(currentPos.y), glm::floor(currentPos.z));
-
-            // Debug the integer coordinates
-            std::cout << "Integer position: "
-                      << "x: " << intPos.x << ", "
-                      << "y: " << intPos.y << ", "
-                      << "z: " << intPos.z << std::endl;
-
-            BLOCK block = world->getBlockData(intPos);
-            if (block != BLOCK::AIR_BLOCK)
-            {
-                world->removeBlock(intPos);
-                break; // Exit the loop after removing the block
-            }
-        }
-
-        std::cout << "\n\n";
+        shoot_ray(removeBlock);
     }
 }
 
@@ -184,6 +225,8 @@ int main(void)
     Texture atlas = Texture("./res/textures/texture-atlas.jpg", GL_REPEAT, GL_NEAREST);
     atlas.bind();
 
+    world->init();
+
     // Timing variables
     auto startTime = std::chrono::high_resolution_clock::now();
     int frameCount = 0;
@@ -220,6 +263,7 @@ int main(void)
         int modelLoc = glGetUniformLocation(shader.Id, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
+        shoot_ray(focusBlock);
         world->render();
 
         glfwSwapBuffers(window);

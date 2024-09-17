@@ -24,9 +24,9 @@ void renderRegularBlock(BlockRenderInfo &renderInfo)
 
         renderInfo.indiceOffset += 4;
     }
+    // South face
     if ((renderInfo.cover & 2) == 2)
     {
-        // South face
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f, 1.0f), glm::vec2(sideTexCoords.u1, sideTexCoords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(sideTexCoords.u2, sideTexCoords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(sideTexCoords.u2, sideTexCoords.v1)});
@@ -41,9 +41,9 @@ void renderRegularBlock(BlockRenderInfo &renderInfo)
 
         renderInfo.indiceOffset += 4;
     }
+    // West face
     if ((renderInfo.cover & 4) == 4)
     {
-        // West face
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(sideTexCoords.u1, sideTexCoords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(sideTexCoords.u2, sideTexCoords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(sideTexCoords.u2, sideTexCoords.v2)});
@@ -58,9 +58,9 @@ void renderRegularBlock(BlockRenderInfo &renderInfo)
 
         renderInfo.indiceOffset += 4;
     }
+    // East face
     if ((renderInfo.cover & 8) == 8)
     {
-        // East face
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(sideTexCoords.u1, sideTexCoords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f, 0.0f), glm::vec2(sideTexCoords.u2, sideTexCoords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(sideTexCoords.u2, sideTexCoords.v1)});
@@ -75,9 +75,9 @@ void renderRegularBlock(BlockRenderInfo &renderInfo)
 
         renderInfo.indiceOffset += 4;
     }
+    // Bottom face
     if ((renderInfo.cover & 16) == 16)
     {
-        // Bottom face
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(bottomTexCoords.u1, bottomTexCoords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(bottomTexCoords.u2, bottomTexCoords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(bottomTexCoords.u2, bottomTexCoords.v2)});
@@ -92,9 +92,9 @@ void renderRegularBlock(BlockRenderInfo &renderInfo)
 
         renderInfo.indiceOffset += 4;
     }
+    // Top face
     if ((renderInfo.cover & 32) == 32)
     {
-        // Top face
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(topTexCoords.u1, topTexCoords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f, 0.0f), glm::vec2(topTexCoords.u2, topTexCoords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(topTexCoords.u2, topTexCoords.v1)});
