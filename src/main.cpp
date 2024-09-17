@@ -96,7 +96,6 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
     player->updateLookCoords(xpos, ypos);
 }
-
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -119,17 +118,20 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
             // Compute the current position along the ray
             glm::vec3 currentPos = pos + fVec * distance;
 
-            // Print the coordinates
-            std::cout << "Step at distance " << distance << ": "
-                      << "x: " << currentPos.x << ", "
-                      << "y: " << currentPos.y << ", "
-                      << "z: " << currentPos.z << std::endl;
-            BLOCK block = world->getBlockData(glm::ivec3((int)currentPos.x, (int)currentPos.y, (int)currentPos.z));
+            // Cast to integer coordinates, rounding towards the origin
+            glm::ivec3 intPos = glm::ivec3(glm::floor(currentPos.x), glm::floor(currentPos.y), glm::floor(currentPos.z));
+
+            // Debug the integer coordinates
+            std::cout << "Integer position: "
+                      << "x: " << intPos.x << ", "
+                      << "y: " << intPos.y << ", "
+                      << "z: " << intPos.z << std::endl;
+
+            BLOCK block = world->getBlockData(intPos);
             if (block != BLOCK::AIR_BLOCK)
             {
-                world->removeBlock(glm::ivec3((int)currentPos.x, (int)currentPos.y, (int)currentPos.z));
-                break;
-                std::cout << "\n\n";
+                world->removeBlock(intPos);
+                break; // Exit the loop after removing the block
             }
         }
 
