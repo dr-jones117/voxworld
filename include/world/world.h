@@ -13,6 +13,7 @@ class World
 public:
     World()
     {
+        focusMesh.setDepthTest(false);
     }
 
     void init();
@@ -50,7 +51,7 @@ private:
     void addChunksToMeshQueue(ChunkPos pos);
 
     void renderChunkMeshes();
-    void generateChunkMeshes(ChunkPos pos);
+    void generateChunkMesh(ChunkPos pos);
     void generateNextMesh();
 
     bool chunkMeshExists(ChunkPos pos);

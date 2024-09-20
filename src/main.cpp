@@ -214,11 +214,13 @@ int main(void)
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     Shader shader = Shader("./res/shaders/object.shader");
     shader.useProgram();
 
-    Texture atlas = Texture("./res/textures/texture-atlas.jpg", GL_REPEAT, GL_NEAREST);
+    Texture atlas = Texture("./res/textures/atlas-new.png", GL_REPEAT, GL_NEAREST);
     atlas.bind();
 
     world->init();

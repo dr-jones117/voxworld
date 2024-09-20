@@ -34,12 +34,18 @@ public:
     void draw()
     {
         bind();
-        glDisable(GL_DEPTH_TEST);
-        glLineWidth(10.0f);
+        if (!depth_test)
+        {
+            glDisable(GL_DEPTH_TEST);
+        }
+
         GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), &vertices.front(), GL_STATIC_DRAW));
         GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices.front(), GL_STATIC_DRAW));
-        GLCall(glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, (void *)0));
-        glEnable(GL_DEPTH_TEST);
+        GLCall(glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void *)0));
+        if (!depth_test)
+        {
+            glEnable(GL_DEPTH_TEST);
+        }
         unbind();
     }
 
@@ -49,12 +55,17 @@ public:
         indices = {};
     }
 
+    void setDepthTest(bool setter)
+    {
+        depth_test = setter;
+    }
+
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
 private:
     unsigned int VBO, EBO, VAO;
-    bool depth_test = false;
+    bool depth_test = true;
 
     void bind()
     {
