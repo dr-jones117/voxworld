@@ -106,64 +106,98 @@ void focusBlock(glm::ivec3 &pos, char &face)
 {
     world->updateFocusBlock(pos, face);
 }
-
+char determineHitFace(const glm::vec3 &rayDir, const glm::vec3 &hitPoint)
+{
+    float tolerance = 0.001;
+    if (std::abs(std::floor(hitPoint.x) - hitPoint.x) < tolerance)
+    {
+        return rayDir.x > 0 ? 4 : 8;
+    }
+    else if (std::abs(std::floor(hitPoint.y) - hitPoint.y) < tolerance)
+    {
+        return rayDir.y > 0 ? 16 : 32;
+    }
+    else if (std::abs(std::floor(hitPoint.z) - hitPoint.z) < tolerance)
+    {
+        return rayDir.z > 0 ? 1 : 2;
+    }
+    return 0;
+}
+// Main DDA raycasting function
 void shoot_ray(void (*func)(glm::ivec3 &blockPos, char &face))
 {
-    auto fVec = player->getFront(); // Direction of the ray
-    auto pos = player->getPos();    // Origin of the ray
+    glm::vec3 rayDir = glm::normalize(player->getFront()); // Normalize direction of the ray
+    glm::vec3 origin = player->getPos();                   // Ray origin
 
-    float stepSize = 0.01f;   // Define the step size (distance between checks)
-    float maxDistance = 5.0f; // Define the maximum distance to check
+    glm::ivec3 blockPos = glm::ivec3(glm::floor(origin)); // Initial block position
 
-    // Iterate along the ray direction in steps
-    for (float distance = 0.0f; distance <= maxDistance; distance += stepSize)
+    // Calculate the step direction for each axis
+    glm::ivec3 step;
+    step.x = (rayDir.x > 0) ? 1 : -1;
+    step.y = (rayDir.y > 0) ? 1 : -1;
+    step.z = (rayDir.z > 0) ? 1 : -1;
+
+    // Calculate the distances to the first voxel boundary
+    glm::vec3 tMax;
+    tMax.x = (step.x > 0) ? (glm::floor(origin.x + 1) - origin.x) / rayDir.x : (origin.x - glm::floor(origin.x)) / -rayDir.x;
+    tMax.y = (step.y > 0) ? (glm::floor(origin.y + 1) - origin.y) / rayDir.y : (origin.y - glm::floor(origin.y)) / -rayDir.y;
+    tMax.z = (step.z > 0) ? (glm::floor(origin.z + 1) - origin.z) / rayDir.z : (origin.z - glm::floor(origin.z)) / -rayDir.z;
+
+    // Calculate how far to step along the ray for each axis
+    glm::vec3 tDelta;
+    tDelta.x = glm::abs(1.0f / rayDir.x);
+    tDelta.y = glm::abs(1.0f / rayDir.y);
+    tDelta.z = glm::abs(1.0f / rayDir.z);
+
+    float maxDistance = 5.0f; // Define the maximum ray distance
+    float distanceTraveled = 0.0f;
+
+    // Traverse through the blocks along the ray
+    while (distanceTraveled <= maxDistance)
     {
-        // Compute the current position along the ray
-        glm::vec3 currentPos = pos + fVec * distance;
-
-        // Cast to integer coordinates, rounding towards the origin
-        glm::ivec3 intPos = glm::ivec3(glm::floor(currentPos.x), glm::floor(currentPos.y), glm::floor(currentPos.z));
-
-        // Get block data at integer position
-        BLOCK block = world->getBlockData(intPos);
+        // Check the block data at the current position
+        BLOCK block = world->getBlockData(blockPos);
         if (block != BLOCK::AIR_BLOCK)
         {
-            // Calculate the hit face based on the ray direction and voxel position
-            glm::vec3 intPosVec = glm::vec3(intPos);
-            glm::vec3 hitPoint = currentPos - intPosVec;
+            // Calculate the exact intersection point
+            glm::vec3 intersectionPoint = origin + rayDir * distanceTraveled;
 
-            float xDist = glm::abs(hitPoint.x);
-            float yDist = glm::abs(hitPoint.y);
-            float zDist = glm::abs(hitPoint.z);
+            // Determine the face using the intersection point
+            char face = determineHitFace(rayDir, intersectionPoint);
+            func(blockPos, face);
+            return; // Exit if a block is hit
+        }
 
-            char face = 0;
-            if (hitPoint.x > 0.99f)
+        // Move to the next voxel boundary in the smallest tMax value direction
+        if (tMax.x < tMax.y)
+        {
+            if (tMax.x < tMax.z)
             {
-                face = 8;
+                blockPos.x += step.x;
+                distanceTraveled = tMax.x;
+                tMax.x += tDelta.x;
             }
-            else if (hitPoint.y > 0.99f)
+            else
             {
-                face = 32;
+                blockPos.z += step.z;
+                distanceTraveled = tMax.z;
+                tMax.z += tDelta.z;
             }
-            else if (hitPoint.z > 0.99f)
+        }
+        else
+        {
+            if (tMax.y < tMax.z)
             {
-                face = 2;
+                blockPos.y += step.y;
+                distanceTraveled = tMax.y;
+                tMax.y += tDelta.y;
             }
-            else if (hitPoint.x == std::min(std::min(hitPoint.x, hitPoint.y), hitPoint.z))
+            else
             {
-                face = 4;
+                blockPos.z += step.z;
+                distanceTraveled = tMax.z;
+                tMax.z += tDelta.z;
             }
-            else if (hitPoint.y == std::min(std::min(hitPoint.x, hitPoint.y), hitPoint.z))
-            {
-                face = 16;
-            }
-            else if (hitPoint.z == std::min(std::min(hitPoint.x, hitPoint.y), hitPoint.z))
-            {
-                face = 1;
-            }
-
-            func(intPos, face);
-            break;
         }
     }
 }
@@ -210,7 +244,7 @@ int main(void)
         return -1;
     }
 
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
