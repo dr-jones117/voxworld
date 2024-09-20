@@ -34,8 +34,6 @@ void World::generateNextMesh()
     ChunkPos pos = chunksToMeshQueue.front();
     chunksToMeshQueue.pop_front();
 
-    lock.unlock();
-
     ChunkMesh chunkMesh;
     chunkMesh.pos = pos;
     chunkMesh.isInitialized = false;
@@ -68,6 +66,8 @@ void World::generateNextMesh()
     auto southChunkData = getChunkDataIfExists({pos.x, pos.z + 1});
     auto westChunkData = getChunkDataIfExists({pos.x - 1, pos.z});
     auto eastChunkData = getChunkDataIfExists({pos.x + 1, pos.z});
+
+    lock.unlock();
 
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
@@ -187,9 +187,9 @@ void World::initializeChunkGL(ChunkMesh &chunkMesh)
 void World::renderChunkMeshes()
 {
     std::lock_guard<std::mutex> lock(mesh_mtx);
-    for (const auto &pair : chunkMeshMap)
+    for (auto &pair : chunkMeshMap)
     {
-        ChunkMesh chunk = pair.second;
+        ChunkMesh &chunk = pair.second;
         if (!chunk.isInitialized)
             initializeChunkGL(chunk);
 

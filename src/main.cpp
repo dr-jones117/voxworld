@@ -28,7 +28,7 @@
 #include <chrono>
 #include <rendering.h>
 
-#define SHOW_FPS false
+#define SHOW_FPS true
 
 int screenWidth = 1280, screenHeight = 720;
 Player *player = new Player();
@@ -131,14 +131,12 @@ void shoot_ray(void (*func)(glm::ivec3 &blockPos, char &face))
             // Calculate the hit face based on the ray direction and voxel position
             glm::vec3 intPosVec = glm::vec3(intPos);
             glm::vec3 hitPoint = currentPos - intPosVec;
-            std::cout << "hitPoint: " << hitPoint.x << ", " << hitPoint.y << ", " << hitPoint.z << std::endl;
 
             float xDist = glm::abs(hitPoint.x);
             float yDist = glm::abs(hitPoint.y);
             float zDist = glm::abs(hitPoint.z);
 
             char face = 0;
-            // Determine the hit face with a threshold to handle edge cases
             if (hitPoint.x > 0.99f)
             {
                 face = 8;
@@ -165,11 +163,9 @@ void shoot_ray(void (*func)(glm::ivec3 &blockPos, char &face))
             }
 
             func(intPos, face);
-            break; // Exit the loop after detecting the block
+            break;
         }
     }
-
-    std::cout << "\n\n";
 }
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)

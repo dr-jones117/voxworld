@@ -90,12 +90,9 @@ void World::removeBlock(glm::ivec3 blockPos)
     if (data.size() > 0)
     {
         data[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
-        // std::cout << "old data: " << (BLOCK)data[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)] << std::endl;
-        // std::cout << "data: ";
         auto testData = chunkDataMap[chunkPos];
         BLOCK testBlock = (BLOCK)testData[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)];
-        // std::cout << testBlock;
-        // generateNextMesh(chunkPos);
+        // TODO: updatemeshhere!
     }
 }
 
@@ -106,15 +103,8 @@ void World::generateNewChunks(ChunkPos chunkPos)
     addChunksToMeshQueue(chunkPos);
     if (!chunksToMeshQueue.empty())
     {
-        auto obj = chunksToMeshQueue.front();
-        std::cout << obj.x << ", " << obj.z << std::endl;
-        std::cout << chunksToMeshQueue.size();
         std::thread t1(&World::generateNextMesh, this);
         t1.detach();
-    }
-    else
-    {
-        std::cout << "empty!" << std::endl;
     }
 
     removeUnneededChunkData(chunkPos);
