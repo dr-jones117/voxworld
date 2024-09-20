@@ -54,6 +54,7 @@ void World::generateChunkData(ChunkPos pos)
         }
     }
 
+    std::lock_guard<std::mutex> lock(mesh_mtx);
     chunkDataMap[pos] = data;
 }
 
@@ -140,6 +141,4 @@ void World::generateChunkDataFromPos(ChunkPos pos)
             }
         }
     }
-
-    removeUnneededChunkData(pos);
 }

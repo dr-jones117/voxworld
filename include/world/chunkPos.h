@@ -2,10 +2,15 @@
 
 #include <functional>
 
-typedef struct
+struct ChunkPos
 {
     int x, z;
-} ChunkPos;
+
+    bool operator==(const ChunkPos &other) const
+    {
+        return x == other.x && z == other.z;
+    }
+};
 
 struct ChunkPosHash
 {

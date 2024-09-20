@@ -1,5 +1,8 @@
 #pragma once
 
+#include <deque>
+#include <mutex>
+
 #include "world/chunkData.h"
 #include "world/chunkMesh.h"
 #include "block.h"
@@ -22,7 +25,12 @@ public:
 
 private:
     ChunkDataMap chunkDataMap;
+
+    std::mutex mesh_mtx;
     ChunkMeshMap chunkMeshMap;
+
+    std::deque<ChunkPos> chunksToMeshQueue;
+
     Mesh focusMesh;
 
     // chunk data
@@ -35,12 +43,15 @@ private:
     void removeUnneededChunkData(ChunkPos pos);
 
     // chunk mesh
+    void initializeChunkGL(ChunkMesh &chunkMesh);
     void bindChunk(ChunkMesh &chunkMesh);
     void unbindChunk(ChunkMesh &chunkMesh);
 
+    void addChunksToMeshQueue(ChunkPos pos);
+
     void renderChunkMeshes();
     void generateChunkMeshes(ChunkPos pos);
-    void generateChunkMesh(ChunkPos pos);
+    void generateNextMesh();
 
     bool chunkMeshExists(ChunkPos pos);
     void removeChunkFromMap(ChunkPos pos);

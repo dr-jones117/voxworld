@@ -23,6 +23,7 @@ typedef struct
     unsigned int VBO, EBO, VAO;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
+    bool isInitialized;
 } ChunkMesh;
 
 typedef std::unordered_map<ChunkPos, ChunkMesh, ChunkPosHash, ChunkPosEqual> ChunkMeshMap;

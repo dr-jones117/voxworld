@@ -1,11 +1,14 @@
 #include <vector>
 #include <iostream>
+#include <thread>
 
 #include "world/world.h"
 #include "world/chunkData.h"
 #include "world/chunkMesh.h"
 #include "world/chunkPos.h"
 #include "block.h"
+
+#include <chrono>
 
 void World::init()
 {
@@ -92,14 +95,30 @@ void World::removeBlock(glm::ivec3 blockPos)
         auto testData = chunkDataMap[chunkPos];
         BLOCK testBlock = (BLOCK)testData[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)];
         // std::cout << testBlock;
-        generateChunkMesh(chunkPos);
+        // generateNextMesh(chunkPos);
     }
 }
 
 void World::generateNewChunks(ChunkPos chunkPos)
 {
+
     generateChunkDataFromPos(chunkPos);
-    generateChunkMeshes(chunkPos);
+    addChunksToMeshQueue(chunkPos);
+    if (!chunksToMeshQueue.empty())
+    {
+        auto obj = chunksToMeshQueue.front();
+        std::cout << obj.x << ", " << obj.z << std::endl;
+        std::cout << chunksToMeshQueue.size();
+        std::thread t1(&World::generateNextMesh, this);
+        t1.detach();
+    }
+    else
+    {
+        std::cout << "empty!" << std::endl;
+    }
+
+    removeUnneededChunkData(chunkPos);
+    removeUnneededChunkMeshes(chunkPos);
 }
 
 void World::render()

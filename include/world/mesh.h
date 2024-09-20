@@ -35,9 +35,10 @@ public:
     {
         bind();
         glDisable(GL_DEPTH_TEST);
+        glLineWidth(10.0f);
         GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), &vertices.front(), GL_STATIC_DRAW));
         GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices.front(), GL_STATIC_DRAW));
-        GLCall(glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void *)0));
+        GLCall(glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, (void *)0));
         glEnable(GL_DEPTH_TEST);
         unbind();
     }
