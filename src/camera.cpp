@@ -77,11 +77,11 @@ void Camera::tick(double currentTime)
 
     if (movingForward)
     {
-        cameraPos += speed * cameraFront;
+        cameraPos += speed * glm::vec3(cameraFront.x, 0, cameraFront.z);
     }
     if (movingBackward)
     {
-        cameraPos -= speed * cameraFront;
+        cameraPos -= speed * glm::vec3(cameraFront.x, 0, cameraFront.z);
     }
     if (movingLeftward)
     {
@@ -90,6 +90,14 @@ void Camera::tick(double currentTime)
     if (movingRightward)
     {
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+    }
+    if (movingUpward)
+    {
+        cameraPos += speed * cameraUp;
+    }
+    if (movingDownward)
+    {
+        cameraPos -= speed * cameraUp;
     }
 
     deltaTime = currentTime - lastTick;
@@ -120,6 +128,16 @@ void Camera::setLeftward(bool setter)
 void Camera::setRightward(bool setter)
 {
     movingRightward = setter;
+}
+
+void Camera::setUpward(bool setter)
+{
+    movingUpward = setter;
+}
+
+void Camera::setDownward(bool setter)
+{
+    movingDownward = setter;
 }
 
 void Camera::setSpeedMode(bool setter)

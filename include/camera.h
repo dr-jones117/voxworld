@@ -29,6 +29,8 @@ private:
     bool movingBackward;
     bool movingLeftward;
     bool movingRightward;
+    bool movingUpward;
+    bool movingDownward;
 
 public:
     int Id;
@@ -43,6 +45,8 @@ public:
     void setBackward(bool setter);
     void setLeftward(bool setter);
     void setRightward(bool setter);
+    void setUpward(bool setter);
+    void setDownward(bool setter);
     void setSpeedMode(bool setter);
     void updateLookCoords(double xpos, double ypos);
 };

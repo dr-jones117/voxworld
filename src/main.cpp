@@ -79,6 +79,16 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
         player->setRightward(false);
 
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        player->setDownward(true);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE)
+        player->setDownward(false);
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        player->setUpward(true);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
+        player->setUpward(false);
+
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         player->setSpeedMode(true);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)

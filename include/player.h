@@ -60,12 +60,22 @@ public:
         camera->setRightward(setter);
     }
 
+    void setUpward(bool setter)
+    {
+        camera->setUpward(setter);
+    }
+
+    void setDownward(bool setter)
+    {
+        camera->setDownward(setter);
+    }
+
     void setSpeedMode(bool setter)
     {
         camera->setSpeedMode(setter);
     }
 
-    void updateLookCoords(double x, double y)
+        void updateLookCoords(double x, double y)
     {
         camera->updateLookCoords(x, y);
     }
