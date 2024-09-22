@@ -2,16 +2,43 @@
 
 #include <deque>
 #include <mutex>
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <queue>
+#include <condition_variable>
+#include <functional>
+#include <atomic>
 
 #include "world/chunkData.h"
 #include "world/chunkMesh.h"
 #include "block.h"
 #include "world/mesh.h"
 
+class ThreadPool
+{
+public:
+    ThreadPool(size_t numThreads);
+    ~ThreadPool();
+
+    void enqueueJob(std::function<void()> job);
+    void stop();
+
+private:
+    std::vector<std::thread> workers;       // Vector to hold all threads
+    std::queue<std::function<void()>> jobs; // Queue for pending jobs
+
+    std::mutex queueMutex;             // Protect access to the job queue
+    std::condition_variable condition; // Used to notify threads about jobs
+    std::atomic<bool> stopFlag;        // Flag to indicate stopping
+
+    void workerThread(); // Worker function for threads
+};
+
 class World
 {
 public:
-    World()
+    World() : pool(10)
     {
         focusMesh.setDepthTest(false);
     }
@@ -27,6 +54,7 @@ public:
 private:
     ChunkDataMap chunkDataMap;
 
+    ThreadPool pool;
     std::mutex mesh_mtx;
     ChunkMeshMap chunkMeshMap;
 
