@@ -131,7 +131,8 @@ void Camera::tick(double currentTime)
         velocity += accelerationVector * acceleration * (float)deltaTime;
 
         // Clamp the velocity magnitude to the maximum speed
-        if (glm::length(velocity) > useSpeed)
+        auto length = glm::length(glm::vec3(velocity.x, 0.0f, velocity.z));
+        if (length > useSpeed)
         {
             auto normalized = glm::normalize(glm::vec3(velocity.x, 0.0f, velocity.z)) * useSpeed;
             velocity = glm::vec3(normalized.x, velocity.y, normalized.z);
@@ -142,8 +143,7 @@ void Camera::tick(double currentTime)
     velocity.y += gravity * (float)deltaTime;
 
     float rayDist = 0.3f;
-
-    float xyThreshold = 0.2;
+    float xzThreshold = 0.2;
     bool xPosHit = false;
     bool xNegHit = false;
     bool yPosHit = false;
@@ -159,10 +159,10 @@ void Camera::tick(double currentTime)
 
     RayCastInfo rayInfoYPos = {*world, cameraPos, glm::vec3(0.001f, 0.998f, 0.001f), rayDist, doNothingIfHit};
 
-    RayCastInfo rayInfoYNeg = {*world, glm::vec3(cameraPos.x - xyThreshold, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
-    RayCastInfo rayInfoYNeg2 = {*world, glm::vec3(cameraPos.x + xyThreshold, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
-    RayCastInfo rayInfoYNeg3 = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z - xyThreshold), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
-    RayCastInfo rayInfoYNeg4 = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z + xyThreshold), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoYNeg = {*world, glm::vec3(cameraPos.x - xzThreshold, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoYNeg2 = {*world, glm::vec3(cameraPos.x + xzThreshold, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoYNeg3 = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z - xzThreshold), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoYNeg4 = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z + xzThreshold), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
 
     RayCastInfo rayInfoZPos = {*world, cameraPos, glm::vec3(0.001f, 0.001f, 0.998f), rayDist, doNothingIfHit};
     RayCastInfo rayInfoZPosLow = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, 0.001f, 0.998f), rayDist, doNothingIfHit};
@@ -240,11 +240,6 @@ void Camera::tick(double currentTime)
                 velocity.z -= decelerationVector.z;
             }
         }
-    }
-    else
-    {
-        // If moving, ensure vertical velocity is maintained
-        velocity.y = velocity.y; // This line is just to clarify; it keeps the current vertical velocity.
     }
 
     // Apply movement to camera position based on velocity
