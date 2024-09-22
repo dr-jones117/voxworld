@@ -15,6 +15,7 @@
 #include "glError.h"
 #include "texture.h"
 #include "player.h"
+#include "physics.h"
 
 #include "world/chunkData.h"
 #include "world/chunkMesh.h"
@@ -31,8 +32,8 @@
 #define SHOW_FPS true
 
 int screenWidth = 1280, screenHeight = 720;
-Player *player = new Player();
 World *world = new World();
+Player *player = new Player(world);
 
 void error_callback(int error, const char *description)
 {
@@ -116,112 +117,19 @@ void focusBlock(glm::ivec3 &pos, char &face)
 {
     world->updateFocusBlock(pos, face);
 }
-char determineHitFace(const glm::vec3 &rayDir, const glm::vec3 &hitPoint)
-{
-    float tolerance = 0.001;
-    if (std::abs(std::floor(hitPoint.x) - hitPoint.x) < tolerance)
-    {
-        return rayDir.x > 0 ? 4 : 8;
-    }
-    else if (std::abs(std::floor(hitPoint.y) - hitPoint.y) < tolerance)
-    {
-        return rayDir.y > 0 ? 16 : 32;
-    }
-    else if (std::abs(std::floor(hitPoint.z) - hitPoint.z) < tolerance)
-    {
-        return rayDir.z > 0 ? 1 : 2;
-    }
-    return 0;
-}
-// Main DDA raycasting function
-void shoot_ray(void (*func)(glm::ivec3 &blockPos, char &face))
-{
-    glm::vec3 rayDir = glm::normalize(player->getFront()); // Normalize direction of the ray
-    glm::vec3 origin = player->getPos();                   // Ray origin
-
-    glm::ivec3 blockPos = glm::ivec3(glm::floor(origin)); // Initial block position
-
-    // Calculate the step direction for each axis
-    glm::ivec3 step;
-    step.x = (rayDir.x > 0) ? 1 : -1;
-    step.y = (rayDir.y > 0) ? 1 : -1;
-    step.z = (rayDir.z > 0) ? 1 : -1;
-
-    // Calculate the distances to the first voxel boundary
-    glm::vec3 tMax;
-    tMax.x = (step.x > 0) ? (glm::floor(origin.x + 1) - origin.x) / rayDir.x : (origin.x - glm::floor(origin.x)) / -rayDir.x;
-    tMax.y = (step.y > 0) ? (glm::floor(origin.y + 1) - origin.y) / rayDir.y : (origin.y - glm::floor(origin.y)) / -rayDir.y;
-    tMax.z = (step.z > 0) ? (glm::floor(origin.z + 1) - origin.z) / rayDir.z : (origin.z - glm::floor(origin.z)) / -rayDir.z;
-
-    // Calculate how far to step along the ray for each axis
-    glm::vec3 tDelta;
-    tDelta.x = glm::abs(1.0f / rayDir.x);
-    tDelta.y = glm::abs(1.0f / rayDir.y);
-    tDelta.z = glm::abs(1.0f / rayDir.z);
-
-    float maxDistance = 5.0f; // Define the maximum ray distance
-    float distanceTraveled = 0.0f;
-
-    // Traverse through the blocks along the ray
-    while (distanceTraveled <= maxDistance)
-    {
-        // Check the block data at the current position
-        BLOCK block = world->getBlockData(blockPos);
-        if (block != BLOCK::AIR_BLOCK)
-        {
-            // Calculate the exact intersection point
-            glm::vec3 intersectionPoint = origin + rayDir * distanceTraveled;
-
-            // Determine the face using the intersection point
-            char face = determineHitFace(rayDir, intersectionPoint);
-            func(blockPos, face);
-            return; // Exit if a block is hit
-        }
-
-        // Move to the next voxel boundary in the smallest tMax value direction
-        if (tMax.x < tMax.y)
-        {
-            if (tMax.x < tMax.z)
-            {
-                blockPos.x += step.x;
-                distanceTraveled = tMax.x;
-                tMax.x += tDelta.x;
-            }
-            else
-            {
-                blockPos.z += step.z;
-                distanceTraveled = tMax.z;
-                tMax.z += tDelta.z;
-            }
-        }
-        else
-        {
-            if (tMax.y < tMax.z)
-            {
-                blockPos.y += step.y;
-                distanceTraveled = tMax.y;
-                tMax.y += tDelta.y;
-            }
-            else
-            {
-                blockPos.z += step.z;
-                distanceTraveled = tMax.z;
-                tMax.z += tDelta.z;
-            }
-        }
-    }
-}
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        shoot_ray(removeBlock);
+        RayCastInfo info = {*world, player->getPos(), player->getFront(), 5.0f, removeBlock};
+        shoot_ray(info);
     }
 }
 
 int main(void)
 {
+    player->setPhysics(true);
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())
@@ -282,7 +190,6 @@ int main(void)
         world->generateNewChunks(playerChunkPos);
 
         processInput(window);
-        player->tick(glfwGetTime());
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -305,7 +212,13 @@ int main(void)
         int modelLoc = glGetUniformLocation(shader.Id, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        shoot_ray(focusBlock);
+        auto playerfront = player->getFront();
+        // std::cout << "front: (" << playerfront.x << ", " << playerfront.y << ", " << playerfront.z << ") " << std::endl;
+
+        player->tick(glfwGetTime());
+        RayCastInfo info = {*world, player->getPos(), player->getFront(), 5.0f, focusBlock};
+        shoot_ray(info);
+
         world->render();
 
         glfwSwapBuffers(window);

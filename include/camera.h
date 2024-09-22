@@ -4,13 +4,23 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "world/world.h"
+
 class Camera
 {
 private:
     float baseSpeed;
     bool speedMode;
+    World *world;
 
     float speed;
+    float maxSpeed;
+    float height;
+
+    bool isJumping;
+
+    glm::vec3 velocity;
+    glm::vec3 acceleration;
 
     float lastX, lastY;
 
@@ -31,10 +41,11 @@ private:
     bool movingRightward;
     bool movingUpward;
     bool movingDownward;
+    bool physics;
 
 public:
     int Id;
-    Camera(int screenWidth, int screenHeight);
+    Camera(int screenWidth, int screenHeight, World *worldPtr);
 
     void tick(double currentTime);
     glm::mat4 getView();
@@ -48,6 +59,7 @@ public:
     void setUpward(bool setter);
     void setDownward(bool setter);
     void setSpeedMode(bool setter);
+    void setPhysics(bool setter);
     void updateLookCoords(double xpos, double ypos);
 };
 

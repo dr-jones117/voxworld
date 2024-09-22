@@ -30,7 +30,6 @@ void World::unbindChunk(ChunkMesh &chunkMesh)
 
 void World::generateChunkMesh(ChunkPos pos)
 {
-    std::unique_lock<std::mutex> lock(mesh_mtx);
     ChunkMesh chunkMesh;
     chunkMesh.pos = pos;
     chunkMesh.isInitialized = false;
@@ -63,8 +62,6 @@ void World::generateChunkMesh(ChunkPos pos)
     auto southChunkData = getChunkDataIfExists({pos.x, pos.z + 1});
     auto westChunkData = getChunkDataIfExists({pos.x - 1, pos.z});
     auto eastChunkData = getChunkDataIfExists({pos.x + 1, pos.z});
-
-    lock.unlock();
 
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
@@ -157,9 +154,8 @@ void World::generateChunkMesh(ChunkPos pos)
         }
     }
 
-    lock.lock();
+    std::lock_guard<std::mutex> mesh_lock(mesh_mtx);
     chunkMeshMap[pos] = chunkMesh;
-    lock.unlock();
 }
 
 void World::generateNextMesh()

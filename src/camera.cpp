@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "camera.h"
+#include "physics.h"
 
 Camera *currentCam = nullptr;
 std::vector<Camera *> cameras;
@@ -31,8 +32,9 @@ void toggleCurrentCamera()
     setCurrentCamera(cameras.at(currentCamIdx));
 }
 
-Camera::Camera(int screenwidth, int screenHeight)
+Camera::Camera(int screenwidth, int screenHeight, World *worldPtr)
 {
+    world = worldPtr;
     lastX = screenwidth / 2;
     lastY = screenHeight / 2;
 
@@ -40,6 +42,8 @@ Camera::Camera(int screenwidth, int screenHeight)
     float lastTick = 0.0f;
 
     speedMode = false;
+    height = 1.2f;
+    isJumping = false;
 
     Id = curr_cam_id;
     curr_cam_id++;
@@ -53,6 +57,9 @@ Camera::Camera(int screenwidth, int screenHeight)
     pitch = 0.0f;
 
     baseSpeed = 12.0f;
+    maxSpeed = 6.0f;
+    velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+    acceleration = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
 glm::mat4 Camera::getView()
@@ -69,45 +76,179 @@ glm::vec3 Camera::getFront()
 
 void Camera::tick(double currentTime)
 {
-    speed = baseSpeed * deltaTime;
-    if (speedMode)
-    {
-        speed *= 3.0f;
-    }
-
-    if (movingForward)
-    {
-        cameraPos += speed * glm::vec3(cameraFront.x, 0, cameraFront.z);
-    }
-    if (movingBackward)
-    {
-        cameraPos -= speed * glm::vec3(cameraFront.x, 0, cameraFront.z);
-    }
-    if (movingLeftward)
-    {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
-    }
-    if (movingRightward)
-    {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
-    }
-    if (movingUpward)
-    {
-        cameraPos += speed * cameraUp;
-    }
-    if (movingDownward)
-    {
-        cameraPos -= speed * cameraUp;
-    }
-
     deltaTime = currentTime - lastTick;
     lastTick = currentTime;
 
+    // Update camera front direction based on yaw and pitch
     glm::vec3 direction;
     direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     direction.y = sin(glm::radians(pitch));
     direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
     cameraFront = glm::normalize(direction);
+
+    // std::cout << "front: (" << cameraFront.x << ", " << cameraFront.y << ", " << cameraFront.z << ") " << std::endl;
+
+    // Update camera right vector (cross product of cameraFront and world up)
+    glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f)));
+
+    // Constants for movement and gravity
+    float acceleration = 50.0f;       // Controls how quickly velocity increases
+    const float deceleration = 80.0f; // Controls how quickly velocity decreases
+    const float gravity = -40.0f;     // Gravity acceleration
+    glm::vec3 accelerationVector(0.0f);
+
+    float useSpeed = maxSpeed;
+
+    if (speedMode)
+    {
+        acceleration = acceleration * 1.5;
+        useSpeed = maxSpeed * 1.3;
+    }
+
+    // Movement input along the x-z plane
+    if (movingForward)
+    {
+        accelerationVector += glm::vec3(cameraFront.x, 0.0f, cameraFront.z); // No vertical movement
+    }
+    if (movingBackward)
+    {
+        accelerationVector -= glm::vec3(cameraFront.x, 0.0f, cameraFront.z); // No vertical movement
+    }
+    if (movingLeftward)
+    {
+        accelerationVector -= glm::vec3(cameraRight.x, 0.0f, cameraRight.z); // No vertical movement
+    }
+    if (movingRightward)
+    {
+        accelerationVector += glm::vec3(cameraRight.x, 0.0f, cameraRight.z); // No vertical movement
+    }
+
+    // Apply acceleration based on input
+    if (glm::length(accelerationVector) > 0.0f)
+    {
+        // Normalize accelerationVector to maintain direction, then apply acceleration
+        accelerationVector = glm::normalize(accelerationVector);
+        velocity += accelerationVector * acceleration * (float)deltaTime;
+
+        // Clamp the velocity magnitude to the maximum speed
+        if (glm::length(velocity) > useSpeed)
+        {
+            auto normalized = glm::normalize(glm::vec3(velocity.x, 0.0f, velocity.z)) * useSpeed;
+            velocity = glm::vec3(normalized.x, velocity.y, normalized.z);
+        }
+    }
+
+    // Always apply gravity to the vertical velocity
+    velocity.y += gravity * (float)deltaTime;
+
+    float rayDist = 0.3f;
+
+    float xyThreshold = 0.2;
+    bool xPosHit = false;
+    bool xNegHit = false;
+    bool yPosHit = false;
+    bool yNegHit = false;
+    bool zNegHit = false;
+    bool zPosHit = false;
+
+    // Perform raycast checks for positive and negative directions along each axis
+    RayCastInfo rayInfoXPos = {*world, cameraPos, glm::vec3(0.998f, 0.001f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoXPosLow = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z), glm::vec3(0.998f, 0.001f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoXNeg = {*world, cameraPos, glm::vec3(-0.998f, 0.001f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoXNegLow = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z), glm::vec3(-0.998f, 0.001f, 0.001f), rayDist, doNothingIfHit};
+
+    RayCastInfo rayInfoYPos = {*world, cameraPos, glm::vec3(0.001f, 0.998f, 0.001f), rayDist, doNothingIfHit};
+
+    RayCastInfo rayInfoYNeg = {*world, glm::vec3(cameraPos.x - xyThreshold, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoYNeg2 = {*world, glm::vec3(cameraPos.x + xyThreshold, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoYNeg3 = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z - xyThreshold), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoYNeg4 = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z + xyThreshold), glm::vec3(0.001f, -0.998f, 0.001f), rayDist, doNothingIfHit};
+
+    RayCastInfo rayInfoZPos = {*world, cameraPos, glm::vec3(0.001f, 0.001f, 0.998f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoZPosLow = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, 0.001f, 0.998f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoZNeg = {*world, cameraPos, glm::vec3(0.001f, 0.001f, -0.998f), rayDist, doNothingIfHit};
+    RayCastInfo rayInfoZNegLow = {*world, glm::vec3(cameraPos.x, cameraPos.y - height, cameraPos.z), glm::vec3(0.001f, 0.001f, -0.998f), rayDist, doNothingIfHit};
+
+    if (shoot_ray(rayInfoYNeg) || shoot_ray(rayInfoYNeg2) || shoot_ray(rayInfoYNeg3) || shoot_ray(rayInfoYNeg4))
+    {
+        yNegHit = true;
+    }
+    if (shoot_ray(rayInfoXPosLow) || shoot_ray(rayInfoXPos))
+    {
+        xPosHit = true;
+    }
+    if (shoot_ray(rayInfoXNeg) || shoot_ray(rayInfoXNegLow))
+    {
+        xNegHit = true;
+    }
+    if (shoot_ray(rayInfoZNeg) || shoot_ray(rayInfoZNegLow))
+    {
+        zNegHit = true;
+    }
+    if (shoot_ray(rayInfoZPos) || shoot_ray(rayInfoZPosLow))
+    {
+        zPosHit = true;
+    }
+
+    if (isJumping && yNegHit)
+    {
+        isJumping = false;
+    }
+
+    // If ray hits something, stop movement in that direction
+    if (velocity.x > 0.0f && xPosHit)
+        velocity.x = 0.0f; // Positive X
+    if (velocity.x < 0.0f && xNegHit)
+        velocity.x = 0.0f; // Negative X
+    if (velocity.y > 0.0f && shoot_ray(rayInfoYPos))
+        velocity.y = 0.0f; // Positive Y
+    if (velocity.y < 0.0f && yNegHit)
+        velocity.y = 0.0f; // Negative Y
+    if (velocity.z > 0.0f && zPosHit)
+        velocity.z = 0.0f; // Positive Z
+    if (velocity.z < 0.0f && zNegHit)
+        velocity.z = 0.0f; // Negative Z
+
+    // Vertical movement (upward and downward)
+    if (movingUpward)
+    {
+        if (!isJumping && yNegHit)
+        {
+            isJumping = true;
+            if (velocity.y == 0.0f)
+                velocity.y += 10.0f;
+        }
+    }
+
+    // Decelerate smoothly if no input (only for X and Z components)
+    if (glm::length(accelerationVector) == 0.0f)
+    {
+        if (glm::length(velocity) > 0.0f)
+        {
+            glm::vec3 decelerationVector = glm::normalize(velocity) * deceleration * (float)deltaTime;
+
+            // Only apply deceleration to the X and Z components
+            if (glm::length(decelerationVector) > glm::length(glm::vec3(velocity.x, 0.0f, velocity.z)))
+            {
+                velocity.x = 0.0f;
+                velocity.z = 0.0f;
+            }
+            else
+            {
+                // Apply deceleration to X and Z only
+                velocity.x -= decelerationVector.x;
+                velocity.z -= decelerationVector.z;
+            }
+        }
+    }
+    else
+    {
+        // If moving, ensure vertical velocity is maintained
+        velocity.y = velocity.y; // This line is just to clarify; it keeps the current vertical velocity.
+    }
+
+    // Apply movement to camera position based on velocity
+    cameraPos += velocity * (float)deltaTime;
 }
 
 void Camera::setForward(bool setter)
@@ -143,6 +284,11 @@ void Camera::setDownward(bool setter)
 void Camera::setSpeedMode(bool setter)
 {
     speedMode = setter;
+}
+
+void Camera::setPhysics(bool setter)
+{
+    physics = setter;
 }
 
 void Camera::updateLookCoords(double xpos, double ypos)

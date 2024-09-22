@@ -54,12 +54,13 @@ void World::generateChunkData(ChunkPos pos)
         }
     }
 
-    std::lock_guard<std::mutex> lock(mesh_mtx);
+    std::lock_guard<std::mutex> lock(data_mtx);
     chunkDataMap[pos] = data;
 }
 
 std::vector<char> &World::getChunkDataIfExists(ChunkPos pos)
 {
+    std::lock_guard<std::mutex> lock(data_mtx);
     if (chunkDataExists(pos))
         return chunkDataMap[pos];
 }
@@ -74,6 +75,7 @@ void World::removeChunkDataFromMap(ChunkPos pos)
 
 void World::removeUnneededChunkData(ChunkPos pos)
 {
+    std::lock_guard<std::mutex> lock(data_mtx);
     std::vector<ChunkPos> chunkPosToRemove;
     for (const auto &pair : chunkDataMap)
     {

@@ -25,6 +25,7 @@ public:
     void updateFocusBlock(glm::ivec3 &pos, char &face);
 
 private:
+    std::mutex data_mtx;
     ChunkDataMap chunkDataMap;
 
     std::mutex mesh_mtx;

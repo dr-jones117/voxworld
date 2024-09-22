@@ -1,4 +1,4 @@
-add_executable(voxwrld main.cpp shader.cpp glError.cpp stb_image.cpp texture.cpp camera.cpp block.cpp world/chunkData.cpp world/chunkMesh.cpp world/world.cpp)
+add_executable(voxwrld main.cpp shader.cpp glError.cpp stb_image.cpp texture.cpp camera.cpp block.cpp physics.cpp world/chunkData.cpp world/chunkMesh.cpp world/world.cpp)
 
 set_target_properties(voxwrld PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build

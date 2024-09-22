@@ -2,16 +2,20 @@
 
 #include "camera.h"
 #include "world/chunkData.h"
+#include "physics.h"
 
 class Player
 {
 private:
     Camera *camera;
+    World *world;
+    bool physicsEnabled;
 
 public:
-    Player()
+    Player(World *worldPtr)
     {
-        camera = new Camera(1280, 720);
+        camera = new Camera(1280, 720, worldPtr);
+        world = worldPtr;
     }
 
     glm::vec3 getPos()
@@ -75,8 +79,13 @@ public:
         camera->setSpeedMode(setter);
     }
 
-        void updateLookCoords(double x, double y)
+    void updateLookCoords(double x, double y)
     {
         camera->updateLookCoords(x, y);
+    }
+
+    void setPhysics(bool setter)
+    {
+        camera->setPhysics(setter);
     }
 };
