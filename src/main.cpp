@@ -203,7 +203,12 @@ int main(void)
 
         // projection
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(65.0f), (float)screenWidth / (float)screenHeight, 0.1f, 1000.0f);
+        float radians = 75.0f;
+        if (player->getSpeedMode())
+        {
+            radians = radians * 1.1;
+        }
+        projection = glm::perspective(glm::radians(radians), (float)screenWidth / (float)screenHeight, 0.1f, 1000.0f);
         int projectionLoc = glGetUniformLocation(shader.Id, "projection");
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 

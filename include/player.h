@@ -88,4 +88,9 @@ public:
     {
         camera->setPhysics(setter);
     }
+
+    bool getSpeedMode()
+    {
+        return camera->speedMode;
+    }
 };
