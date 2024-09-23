@@ -7,6 +7,7 @@
 
 bool World::chunkDataExists(ChunkPos pos)
 {
+    std::lock_guard<std::mutex> lock(data_mtx);
     if (chunkDataMap.find(pos) == chunkDataMap.end())
         return false;
     return true;
@@ -60,17 +61,16 @@ void World::generateChunkData(ChunkPos pos)
 
 std::vector<char> &World::getChunkDataIfExists(ChunkPos pos)
 {
-    std::lock_guard<std::mutex> lock(data_mtx);
+
     if (chunkDataExists(pos))
+    {
         return chunkDataMap[pos];
+    }
 }
 
 void World::removeChunkDataFromMap(ChunkPos pos)
 {
-    if (chunkDataExists(pos))
-    {
-        chunkDataMap.erase(pos);
-    }
+    chunkDataMap.erase(pos);
 }
 
 void World::removeUnneededChunkData(ChunkPos pos)

@@ -12,7 +12,7 @@
 class World
 {
 public:
-    World() : threadPool(10)
+    World() : threadPool(1)
     {
         focusMesh.setDepthTest(false);
     }
@@ -33,6 +33,7 @@ private:
     std::mutex mesh_mtx;
     ChunkMeshMap chunkMeshMap;
 
+    std::mutex mesh_queue_mtx;
     std::deque<ChunkPos> chunksToMeshQueue;
 
     Mesh focusMesh;

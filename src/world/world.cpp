@@ -92,22 +92,24 @@ void World::removeBlock(glm::ivec3 blockPos)
         data[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
         auto testData = chunkDataMap[chunkPos];
         BLOCK testBlock = (BLOCK)testData[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)];
-        generateChunkMesh(chunkPos);
+
+                std::unique_lock<std::mutex> queue_lock(mesh_queue_mtx);
+        chunksToMeshQueue.push_front(chunkPos);
         if (block_z <= 0)
         {
-            generateChunkMesh({chunkPos.x, chunkPos.z - 1});
+            chunksToMeshQueue.push_front({chunkPos.x, chunkPos.z - 1});
         }
         if (block_z >= CHUNK_SIZE - 1)
         {
-            generateChunkMesh({chunkPos.x, chunkPos.z + 1});
+            chunksToMeshQueue.push_front({chunkPos.x, chunkPos.z + 1});
         }
         if (block_x <= 0)
         {
-            generateChunkMesh({chunkPos.x - 1, chunkPos.z});
+            chunksToMeshQueue.push_front({chunkPos.x - 1, chunkPos.z});
         }
         if (block_x >= CHUNK_SIZE - 1)
         {
-            generateChunkMesh({chunkPos.x + 1, chunkPos.z});
+            chunksToMeshQueue.push_front({chunkPos.x + 1, chunkPos.z});
         }
     }
 }

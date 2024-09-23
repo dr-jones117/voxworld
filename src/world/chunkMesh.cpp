@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 7;
+int render_distance = 5;
 
 void World::bindChunk(ChunkMesh &chunkMesh)
 {
@@ -154,17 +154,20 @@ void World::generateChunkMesh(ChunkPos pos)
         }
     }
 
-    std::lock_guard<std::mutex> mesh_lock(mesh_mtx);
+    std::unique_lock<std::mutex> mesh_lock(mesh_mtx);
     chunkMeshMap[pos] = chunkMesh;
 }
 
 void World::generateNextMesh()
 {
-    std::unique_lock<std::mutex> lock(mesh_mtx);
+    std::unique_lock<std::mutex> queue_mtx(mesh_queue_mtx);
+
     if (chunksToMeshQueue.empty())
         return;
     ChunkPos pos = chunksToMeshQueue.front();
     chunksToMeshQueue.pop_front();
+
+    queue_mtx.unlock();
 
     ChunkMesh chunkMesh;
     chunkMesh.pos = pos;
@@ -198,8 +201,6 @@ void World::generateNextMesh()
     auto southChunkData = getChunkDataIfExists({pos.x, pos.z + 1});
     auto westChunkData = getChunkDataIfExists({pos.x - 1, pos.z});
     auto eastChunkData = getChunkDataIfExists({pos.x + 1, pos.z});
-
-    lock.unlock();
 
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
@@ -292,9 +293,8 @@ void World::generateNextMesh()
         }
     }
 
-    lock.lock();
+    std::unique_lock<std::mutex> mesh_lock(mesh_mtx);
     chunkMeshMap[pos] = chunkMesh;
-    lock.unlock();
 }
 
 void World::initializeChunkGL(ChunkMesh &chunkMesh)
@@ -339,6 +339,7 @@ void World::renderChunkMeshes()
 
 bool World::chunkMeshExists(ChunkPos pos)
 {
+    std::unique_lock<std::mutex> mesh_lock(mesh_mtx);
     if (chunkMeshMap.find(pos) == chunkMeshMap.end())
         return false;
     return true;
@@ -383,7 +384,7 @@ static bool posIsInQueue(std::deque<ChunkPos> &queue, ChunkPos &pos)
 
 void World::addChunksToMeshQueue(ChunkPos pos)
 {
-    std::unique_lock<std::mutex> lock(mesh_mtx);
+    std::unique_lock<std::mutex> queue_mtx(mesh_queue_mtx);
     int x = pos.x;
     int z = pos.z;
 
