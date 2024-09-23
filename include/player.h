@@ -39,7 +39,7 @@ public:
         return camera->getView();
     }
 
-    void tick(double time)
+    void tick(float time)
     {
         camera->tick(time);
     }

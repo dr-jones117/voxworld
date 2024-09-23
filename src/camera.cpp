@@ -38,8 +38,8 @@ Camera::Camera(int screenwidth, int screenHeight, World *worldPtr)
     lastX = screenwidth / 2;
     lastY = screenHeight / 2;
 
-    float deltaTime = 0.0f;
-    float lastTick = 0.0f;
+    deltaTime = 0.0f;
+    lastTick = 0.0f;
 
     speedMode = false;
     height = 1.2f;
@@ -74,7 +74,7 @@ glm::vec3 Camera::getFront()
     return cameraFront;
 }
 
-void Camera::tick(double currentTime)
+void Camera::tick(float currentTime)
 {
     deltaTime = currentTime - lastTick;
     lastTick = currentTime;

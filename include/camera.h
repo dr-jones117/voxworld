@@ -47,7 +47,7 @@ public:
     int Id;
     Camera(int screenWidth, int screenHeight, World *worldPtr);
 
-    void tick(double currentTime);
+    void tick(float currentTime);
     glm::mat4 getView();
     glm::vec3 getPos();
     glm::vec3 getFront();
