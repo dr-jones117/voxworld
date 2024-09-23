@@ -10,7 +10,7 @@ class Camera
 {
 private:
     float baseSpeed;
-    bool speedMode;
+
     World *world;
 
     float speed;
@@ -44,6 +44,7 @@ private:
     bool physics;
 
 public:
+    bool speedMode;
     int Id;
     Camera(int screenWidth, int screenHeight, World *worldPtr);
 
