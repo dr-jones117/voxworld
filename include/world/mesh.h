@@ -33,6 +33,8 @@ public:
 
     void draw()
     {
+        if (indices.size() <= 0)
+            return;
         bind();
         if (!depth_test)
         {

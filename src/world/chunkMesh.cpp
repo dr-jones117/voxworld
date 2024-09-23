@@ -161,6 +161,8 @@ void World::generateChunkMesh(ChunkPos pos)
 void World::generateNextMesh()
 {
     std::unique_lock<std::mutex> lock(mesh_mtx);
+    if (chunksToMeshQueue.empty())
+        return;
     ChunkPos pos = chunksToMeshQueue.front();
     chunksToMeshQueue.pop_front();
 
@@ -320,6 +322,8 @@ void World::renderChunkMeshes()
     for (auto &pair : chunkMeshMap)
     {
         ChunkMesh &chunk = pair.second;
+        if (chunk.indices.size() <= 0)
+            return;
         if (!chunk.isInitialized)
             initializeChunkGL(chunk);
 
