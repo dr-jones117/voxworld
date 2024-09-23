@@ -117,11 +117,8 @@ void World::generateNewChunks(ChunkPos chunkPos)
 
     generateChunkDataFromPos(chunkPos);
     addChunksToMeshQueue(chunkPos);
-    if (!chunksToMeshQueue.empty())
-    {
-        std::thread t1(&World::generateNextMesh, this);
-        t1.detach();
-    }
+    threadPool.enqueue([this]
+                       { generateNextMesh(); });
 
     removeUnneededChunkData(chunkPos);
     removeUnneededChunkMeshes(chunkPos);

@@ -7,11 +7,12 @@
 #include "world/chunkMesh.h"
 #include "block.h"
 #include "world/mesh.h"
+#include "threading.h"
 
 class World
 {
 public:
-    World()
+    World() : threadPool(10)
     {
         focusMesh.setDepthTest(false);
     }
@@ -25,6 +26,7 @@ public:
     void updateFocusBlock(glm::ivec3 &pos, char &face);
 
 private:
+    ThreadPool threadPool;
     std::mutex data_mtx;
     ChunkDataMap chunkDataMap;
 
