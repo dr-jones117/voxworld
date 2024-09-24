@@ -12,9 +12,10 @@
 class World
 {
 public:
-    World() : threadPool(1)
+    World() : threadPool(1), dataThreadPool(1)
     {
         focusMesh.setDepthTest(false);
+        intialDataGenerated = false;
     }
 
     void init();
@@ -26,7 +27,11 @@ public:
     void updateFocusBlock(glm::ivec3 &pos, char &face);
 
 private:
+    bool intialDataGenerated;
+
     ThreadPool threadPool;
+    ThreadPool dataThreadPool;
+
     std::mutex data_mtx;
     ChunkDataMap chunkDataMap;
 
@@ -35,6 +40,9 @@ private:
 
     std::mutex mesh_queue_mtx;
     std::deque<ChunkPos> chunksToMeshQueue;
+
+    std::mutex data_queue_mtx;
+    std::deque<ChunkPos> chunkDataQueue;
 
     Mesh focusMesh;
 

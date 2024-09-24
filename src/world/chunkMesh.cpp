@@ -42,6 +42,8 @@ void World::generateChunkMesh(ChunkPos pos)
     auto westChunkData = getChunkDataIfExists({pos.x - 1, pos.z});
     auto eastChunkData = getChunkDataIfExists({pos.x + 1, pos.z});
 
+    assert(chunkData.size() > 0 && northChunkData.size() > 0 && southChunkData.size() > 0 && westChunkData.size() > 0 && eastChunkData.size() > 0);
+
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
         for (int y = 0; y < CHUNK_HEIGHT; y++) // Z-axis

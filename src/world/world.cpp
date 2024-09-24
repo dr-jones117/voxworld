@@ -116,7 +116,11 @@ void World::removeBlock(glm::ivec3 blockPos)
 
 void World::generateNewChunks(ChunkPos chunkPos)
 {
-    generateChunkDataFromPos(chunkPos);
+    if (!intialDataGenerated)
+    {
+        generateChunkDataFromPos(chunkPos);
+        intialDataGenerated = true;
+    }
     addChunksToMeshQueue(chunkPos);
     threadPool.enqueue([this]
                        { generateNextMesh(); });
