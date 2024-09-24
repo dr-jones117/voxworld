@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 3;
+int render_distance = 5;
 
 void World::bindChunk(ChunkMesh &chunkMesh)
 {
@@ -154,32 +154,13 @@ void World::generateNextMesh()
 
     unsigned int indiceOffset = 0;
 
-    if (!chunkDataExists({pos.x, pos.z}))
-    {
-        generateChunkData({pos.x, pos.z});
-    }
-    if (!chunkDataExists({pos.x, pos.z - 1}))
-    {
-        generateChunkData({pos.x, pos.z - 1});
-    }
-    if (!chunkDataExists({pos.x, pos.z + 1}))
-    {
-        generateChunkData({pos.x, pos.z + 1});
-    }
-    if (!chunkDataExists({pos.x - 1, pos.z}))
-    {
-        generateChunkData({pos.x - 1, pos.z});
-    }
-    if (!chunkDataExists({pos.x + 1, pos.z}))
-    {
-        generateChunkData({pos.x + 1, pos.z});
-    }
-
     auto chunkData = getChunkDataIfExists({pos.x, pos.z});
     auto northChunkData = getChunkDataIfExists({pos.x, pos.z - 1});
     auto southChunkData = getChunkDataIfExists({pos.x, pos.z + 1});
     auto westChunkData = getChunkDataIfExists({pos.x - 1, pos.z});
     auto eastChunkData = getChunkDataIfExists({pos.x + 1, pos.z});
+
+    assert(chunkData.size() > 0 && northChunkData.size() > 0 && southChunkData.size() > 0 && westChunkData.size() > 0 && eastChunkData.size() > 0);
 
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
