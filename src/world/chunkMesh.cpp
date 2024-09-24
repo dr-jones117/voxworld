@@ -290,6 +290,9 @@ void World::initializeChunkGL(ChunkMesh &chunkMesh)
     GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)sizeof(glm::vec3)));
     GLCall(glEnableVertexAttribArray(1));
 
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunkMesh.vertices.size(), &chunkMesh.vertices.front(), GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * chunkMesh.indices.size(), &chunkMesh.indices.front(), GL_STATIC_DRAW));
+
     unbindChunk(chunkMesh);
 
     chunkMesh.isInitialized = true;
@@ -308,8 +311,6 @@ void World::renderChunkMeshes()
 
         bindChunk(chunk);
 
-        GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunk.vertices.size(), &chunk.vertices.front(), GL_STATIC_DRAW));
-        GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * chunk.indices.size(), &chunk.indices.front(), GL_STATIC_DRAW));
         GLCall(glDrawElements(GL_TRIANGLES, chunk.indices.size(), GL_UNSIGNED_INT, (void *)0));
 
         unbindChunk(chunk);
