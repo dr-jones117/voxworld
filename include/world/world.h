@@ -46,7 +46,12 @@ private:
 
     Mesh focusMesh;
 
+    bool posIsInQueue(std::deque<ChunkPos> &queue, ChunkPos &pos);
+
     // chunk data
+    void addChunksToDataQueue(ChunkPos &chunkPos);
+    void generateNextData();
+
     void generateChunkDataFromPos(ChunkPos pos);
     void generateChunkData(ChunkPos pos);
     std::vector<char> &getChunkDataIfExists(ChunkPos pos);

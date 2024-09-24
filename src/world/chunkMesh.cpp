@@ -141,11 +141,16 @@ void World::generateChunkMesh(ChunkPos pos)
 
 void World::generateNextMesh()
 {
+
     std::unique_lock<std::mutex> queue_mtx(mesh_queue_mtx);
 
     if (chunksToMeshQueue.empty())
         return;
     ChunkPos pos = chunksToMeshQueue.front();
+
+    if (!chunkDataExists({pos.x, pos.z}) || !chunkDataExists({pos.x, pos.z - 1}) || !chunkDataExists({pos.x, pos.z + 1}) || !chunkDataExists({pos.x - 1, pos.z}) || !chunkDataExists({pos.x + 1, pos.z}))
+        return;
+
     chunksToMeshQueue.pop_front();
 
     queue_mtx.unlock();
@@ -335,7 +340,7 @@ void World::removeUnneededChunkMeshes(ChunkPos pos)
     }
 }
 
-static bool posIsInQueue(std::deque<ChunkPos> &queue, ChunkPos &pos)
+bool World::posIsInQueue(std::deque<ChunkPos> &queue, ChunkPos &pos)
 {
     auto it = std::find(queue.begin(), queue.end(), pos);
     if (it != queue.end())

@@ -175,3 +175,68 @@ void World::generateChunkDataFromPos(ChunkPos pos)
         }
     }
 }
+
+void World::addChunksToDataQueue(ChunkPos &pos)
+{
+    std::unique_lock<std::mutex> queue_mtx(data_queue_mtx);
+    int x = pos.x;
+    int z = pos.z;
+
+    ChunkPos currPos = pos;
+    if (!chunkDataExists(currPos) && !posIsInQueue(chunkDataQueue, currPos))
+    {
+        chunkDataQueue.push_back(currPos);
+    }
+
+    for (int i = 1; i < render_distance; i++)
+    {
+        // start top left
+        for (int j = 0; j < i * 2; j++)
+        {
+            currPos = {x - i + j, z + i};
+            if (!chunkDataExists(currPos) && !posIsInQueue(chunkDataQueue, currPos))
+            {
+                chunkDataQueue.push_back(currPos);
+            }
+        }
+        // start top right
+        for (int j = 0; j < i * 2; j++)
+        {
+            currPos = {x + i, z + i - j};
+            if (!chunkDataExists(currPos) && !posIsInQueue(chunkDataQueue, currPos))
+            {
+                chunkDataQueue.push_back(currPos);
+            }
+        }
+        // start bottom right
+        for (int j = 0; j < i * 2; j++)
+        {
+            currPos = {x + i - j, z - i};
+            if (!chunkDataExists(currPos) && !posIsInQueue(chunkDataQueue, currPos))
+            {
+                chunkDataQueue.push_back(currPos);
+            }
+        }
+        // start bottom left
+        for (int j = 0; j < i * 2; j++)
+        {
+            currPos = {x - i, z - i + j};
+            if (!chunkDataExists(currPos) && !posIsInQueue(chunkDataQueue, currPos))
+            {
+                chunkDataQueue.push_back(currPos);
+            }
+        }
+    }
+}
+
+void World::generateNextData()
+{
+    std::lock_guard<std::mutex> data_queue_lock(data_queue_mtx);
+    if (chunkDataQueue.empty())
+        return;
+
+    ChunkPos pos = chunkDataQueue.front();
+    chunkDataQueue.pop_front();
+
+    generateChunkData(pos);
+}
