@@ -36,27 +36,6 @@ void World::generateChunkMesh(ChunkPos pos)
 
     unsigned int indiceOffset = 0;
 
-    if (!chunkDataExists({pos.x, pos.z}))
-    {
-        generateChunkData({pos.x, pos.z});
-    }
-    if (!chunkDataExists({pos.x, pos.z - 1}))
-    {
-        generateChunkData({pos.x, pos.z - 1});
-    }
-    if (!chunkDataExists({pos.x, pos.z + 1}))
-    {
-        generateChunkData({pos.x, pos.z + 1});
-    }
-    if (!chunkDataExists({pos.x - 1, pos.z}))
-    {
-        generateChunkData({pos.x - 1, pos.z});
-    }
-    if (!chunkDataExists({pos.x + 1, pos.z}))
-    {
-        generateChunkData({pos.x + 1, pos.z});
-    }
-
     auto chunkData = getChunkDataIfExists({pos.x, pos.z});
     auto northChunkData = getChunkDataIfExists({pos.x, pos.z - 1});
     auto southChunkData = getChunkDataIfExists({pos.x, pos.z + 1});

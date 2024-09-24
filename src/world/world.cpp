@@ -93,7 +93,7 @@ void World::removeBlock(glm::ivec3 blockPos)
         auto testData = chunkDataMap[chunkPos];
         BLOCK testBlock = (BLOCK)testData[block_x + (block_y * CHUNK_SIZE) + (block_z * CHUNK_SIZE * CHUNK_HEIGHT)];
 
-                std::unique_lock<std::mutex> queue_lock(mesh_queue_mtx);
+        std::unique_lock<std::mutex> queue_lock(mesh_queue_mtx);
         chunksToMeshQueue.push_front(chunkPos);
         if (block_z <= 0)
         {
@@ -116,7 +116,6 @@ void World::removeBlock(glm::ivec3 blockPos)
 
 void World::generateNewChunks(ChunkPos chunkPos)
 {
-
     generateChunkDataFromPos(chunkPos);
     addChunksToMeshQueue(chunkPos);
     threadPool.enqueue([this]

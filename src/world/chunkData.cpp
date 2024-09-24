@@ -13,6 +13,22 @@ bool World::chunkDataExists(ChunkPos pos)
     return true;
 }
 
+void generateCaves(std::vector<char> &data, ChunkPos pos)
+{
+    for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
+    {
+        for (int j = 0; j < CHUNK_HEIGHT; j++) // Y-axis
+        {
+            for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
+            {
+                double freq = 0.005;
+                double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
+                // data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
+            }
+        }
+    }
+}
+
 void World::generateChunkData(ChunkPos pos)
 {
     std::vector<char> data;
@@ -54,6 +70,8 @@ void World::generateChunkData(ChunkPos pos)
             }
         }
     }
+
+    // generateCaves(data, pos);
 
     std::lock_guard<std::mutex> lock(data_mtx);
     chunkDataMap[pos] = data;
