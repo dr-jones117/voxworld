@@ -50,7 +50,8 @@ void World::generateChunkData(ChunkPos pos)
         for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
             double freq = 0.005;
-            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
+            double originNoise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
+            double noise = perlin.octave2D_01((freq * originNoise) * (pos.x * CHUNK_SIZE + i), (freq * originNoise) * (pos.z * CHUNK_SIZE + k), 8);
             int blocksInHeight = 0;
             int terrainHeight = (int)(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
 
