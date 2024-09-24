@@ -244,6 +244,10 @@ void Camera::tick(float currentTime)
 
     // Apply movement to camera position based on velocity
     cameraPos += velocity * (float)deltaTime;
+    if (cameraPos.y < -100)
+    {
+        cameraPos.y = 100.0f;
+    }
 }
 
 void Camera::setForward(bool setter)

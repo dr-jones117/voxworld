@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 5;
+int render_distance = 3;
 
 void World::bindChunk(ChunkMesh &chunkMesh)
 {
@@ -339,7 +339,7 @@ void World::removeUnneededChunkMeshes(ChunkPos pos)
     {
         ChunkPos chunkPos = pair.first;
         glm::vec3 vector = glm::vec3(chunkPos.x - pos.x, 0, chunkPos.z - pos.z);
-        if ((int)glm::length(vector) > (render_distance + 3))
+        if ((int)glm::length(vector) > (render_distance + 1))
         {
             chunkPosToRemove.push_back(chunkPos);
         }

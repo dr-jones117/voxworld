@@ -121,7 +121,7 @@ void World::generateNewChunks(ChunkPos chunkPos)
     threadPool.enqueue([this]
                        { generateNextMesh(); });
 
-    removeUnneededChunkData(chunkPos);
+    // removeUnneededChunkData(chunkPos);
     removeUnneededChunkMeshes(chunkPos);
 }
 
