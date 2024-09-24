@@ -18,19 +18,20 @@ bool World::chunkDataExists(ChunkPos pos)
 
 void generateCaves(std::vector<char> &data, ChunkPos pos)
 {
-    std::srand(static_cast<unsigned>(std::time(0))); // Seed with current time
-    int randomNumber = std::rand();                  // Generate a random number
-    for (int i = 0; i < CHUNK_SIZE; i++)             // X-axis
+    double freq = 0.05;   // Reduced frequency for larger caves
+    double density = 0.2; // Adjust density to make caves rarer
+
+    for (int i = 0; i < CHUNK_SIZE; i++)
     {
-        for (int j = 0; j < CHUNK_HEIGHT; j++) // Y-axis
+        for (int j = 0; j < CHUNK_HEIGHT; j++)
         {
-            for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
+            for (int k = 0; k < CHUNK_SIZE; k++)
             {
-                double freq = 0.005;
-                // double noise = perlin.octave3D_01(freq * (pos.x * CHUNK_SIZE + i), freq * j, freq * (pos.z * CHUNK_SIZE + k), 8);
-                randomNumber = std::rand();
-                // std::cout << "Random Number: " << randomNumber << std::endl;
-                if (randomNumber < 15000)
+                // Generate noise value
+                double noise = perlin.octave3D_01(freq * (pos.x * CHUNK_SIZE + i), freq * j, freq * (pos.z * CHUNK_SIZE + k), 8);
+
+                // Adjust the condition to create rarer but larger caves
+                if (noise < (0.55 - density))
                 {
                     data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
                 }
