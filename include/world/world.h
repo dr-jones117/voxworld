@@ -52,7 +52,7 @@ private:
     void addChunksToDataQueue(ChunkPos &chunkPos);
     void generateNextData();
 
-    void generateChunkDataFromPos(ChunkPos pos);
+    void generateChunkDataFromPos(ChunkPos pos, bool initial);
     void generateChunkData(ChunkPos pos);
     std::vector<char> &getChunkDataIfExists(ChunkPos pos);
     bool chunkDataExists(ChunkPos chunkPos);

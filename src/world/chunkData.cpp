@@ -3,6 +3,8 @@
 #include "world/world.h"
 #include "block.h"
 
+#include <random>
+
 #include <iostream>
 
 #include <cstdlib> // For std::rand and std::srand
@@ -18,7 +20,7 @@ bool World::chunkDataExists(ChunkPos pos)
 
 void generateCaves(std::vector<char> &data, ChunkPos pos)
 {
-    double freq = 0.05;   // Reduced frequency for larger caves
+    double freq = 0.03;   // Reduced frequency for larger caves
     double density = 0.2; // Adjust density to make caves rarer
 
     for (int i = 0; i < CHUNK_SIZE; i++)
@@ -27,12 +29,28 @@ void generateCaves(std::vector<char> &data, ChunkPos pos)
         {
             for (int k = 0; k < CHUNK_SIZE; k++)
             {
+                if (j > 80)
+                    continue;
                 // Generate noise value
-                double noise = perlin.octave3D_01(freq * (pos.x * CHUNK_SIZE + i), freq * j, freq * (pos.z * CHUNK_SIZE + k), 8);
+                double noise = perlin.octave3D_01(freq * (pos.x * CHUNK_SIZE + i), freq * j, freq * (pos.z * CHUNK_SIZE + k), 12);
 
                 // Adjust the condition to create rarer but larger caves
-                if (noise < (0.55 - density))
+                if (noise < (0.60 - density))
                 {
+                    BLOCK block = (BLOCK)data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)];
+                    if (block == BLOCK::GRASS_BLOCK || block == BLOCK::DIRT_BLOCK)
+                    {
+                        // Create a random number generator and seed it
+                        std::mt19937 generator((unsigned int)(freq * (pos.x * CHUNK_SIZE + i), freq * j, freq * (pos.z * CHUNK_SIZE + k)));
+
+                        // Define a distribution (uniform distribution in this case)
+                        std::uniform_int_distribution<int> distribution(1, 2);
+
+                        // Generate a random number
+                        int randomNumber = distribution(generator);
+                        if (randomNumber == 1)
+                            continue;
+                    }
                     data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
                 }
             }
@@ -144,7 +162,7 @@ void World::removeUnneededChunkData(ChunkPos pos)
     }
 }
 
-void World::generateChunkDataFromPos(ChunkPos pos)
+void World::generateChunkDataFromPos(ChunkPos pos, bool initial = false)
 {
     int x = pos.x;
     int z = pos.z;
@@ -155,7 +173,12 @@ void World::generateChunkDataFromPos(ChunkPos pos)
         generateChunkData(currPos);
     }
 
-    for (int i = 1; i <= render_distance + 1; i++)
+    int range = render_distance + 1;
+    if (initial)
+    {
+        range = 1;
+    }
+    for (int i = 1; i <= range; i++)
     {
         // start top left
         for (int j = 0; j < i * 2; j++)
