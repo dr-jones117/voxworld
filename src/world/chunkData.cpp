@@ -47,13 +47,18 @@ void World::generateChunkData(ChunkPos pos)
 
     for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
     {
+        bool rockyTops = false;
         for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
-            double freq = 0.005;
-            double originNoise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
-            double noise = perlin.octave2D_01((freq * originNoise) * (pos.x * CHUNK_SIZE + i), (freq * originNoise) * (pos.z * CHUNK_SIZE + k), 8);
+            double freq = 0.003;
+            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
             int blocksInHeight = 0;
             int terrainHeight = (int)(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
+            // std::cout << terrainHeight << std::endl;
+            if (terrainHeight > 110)
+            {
+                rockyTops = true;
+            }
 
             for (int j = CHUNK_HEIGHT - 1; j >= 0; j--) // Y-axis
             {
@@ -65,14 +70,28 @@ void World::generateChunkData(ChunkPos pos)
                     }
                     else
                     {
-                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::DIRT_BLOCK;
+                        if (rockyTops)
+                        {
+                            data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
+                        }
+                        else
+                        {
+                            data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::DIRT_BLOCK;
+                        }
                     }
 
                     blocksInHeight++;
                 }
                 else if (j < terrainHeight)
                 {
-                    data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
+                    if (rockyTops)
+                    {
+                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
+                    }
+                    else
+                    {
+                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
+                    }
                     blocksInHeight++;
                 }
                 else

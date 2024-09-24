@@ -48,7 +48,7 @@ Camera::Camera(int screenwidth, int screenHeight, World *worldPtr)
     Id = curr_cam_id;
     curr_cam_id++;
 
-    cameraPos = glm::vec3(0.0f, 200.0f, 3.0f);
+    cameraPos = glm::vec3(0.0f, 150.0f, 3.0f);
     cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
     cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -76,6 +76,7 @@ glm::vec3 Camera::getFront()
 
 void Camera::tick(float currentTime)
 {
+
     deltaTime = currentTime - lastTick;
     lastTick = currentTime;
 
@@ -98,6 +99,10 @@ void Camera::tick(float currentTime)
     glm::vec3 accelerationVector(0.0f);
 
     float useSpeed = maxSpeed;
+    if (!physics)
+    {
+        useSpeed = useSpeed * 4;
+    }
 
     if (speedMode)
     {
@@ -122,6 +127,10 @@ void Camera::tick(float currentTime)
     {
         accelerationVector += glm::vec3(cameraRight.x, 0.0f, cameraRight.z); // No vertical movement
     }
+    if (movingDownward && !physics)
+    {
+        accelerationVector += -cameraUp;
+    }
 
     // Apply acceleration based on input
     if (glm::length(accelerationVector) > 0.0f)
@@ -140,7 +149,10 @@ void Camera::tick(float currentTime)
     }
 
     // Always apply gravity to the vertical velocity
-    velocity.y += gravity * (float)deltaTime;
+    if (physics)
+    {
+        velocity.y += gravity * (float)deltaTime;
+    }
 
     float rayDist = 0.3f;
     float xzThreshold = 0.2;
@@ -195,19 +207,22 @@ void Camera::tick(float currentTime)
         isJumping = false;
     }
 
-    // If ray hits something, stop movement in that direction
-    if (velocity.x > 0.0f && xPosHit)
-        velocity.x = 0.0f; // Positive X
-    if (velocity.x < 0.0f && xNegHit)
-        velocity.x = 0.0f; // Negative X
-    if (velocity.y > 0.0f && shoot_ray(rayInfoYPos))
-        velocity.y = 0.0f; // Positive Y
-    if (velocity.y < 0.0f && yNegHit)
-        velocity.y = 0.0f; // Negative Y
-    if (velocity.z > 0.0f && zPosHit)
-        velocity.z = 0.0f; // Positive Z
-    if (velocity.z < 0.0f && zNegHit)
-        velocity.z = 0.0f; // Negative Z
+    if (physics)
+    {
+        // If ray hits something, stop movement in that direction
+        if (velocity.x > 0.0f && xPosHit)
+            velocity.x = 0.0f; // Positive X
+        if (velocity.x < 0.0f && xNegHit)
+            velocity.x = 0.0f; // Negative X
+        if (velocity.y > 0.0f && shoot_ray(rayInfoYPos))
+            velocity.y = 0.0f; // Positive Y
+        if (velocity.y < 0.0f && yNegHit)
+            velocity.y = 0.0f; // Negative Y
+        if (velocity.z > 0.0f && zPosHit)
+            velocity.z = 0.0f; // Positive Z
+        if (velocity.z < 0.0f && zNegHit)
+            velocity.z = 0.0f; // Negative Z
+    }
 
     // Vertical movement (upward and downward)
     if (movingUpward)
@@ -215,6 +230,11 @@ void Camera::tick(float currentTime)
         if (!isJumping && yNegHit)
         {
             isJumping = true;
+            if (velocity.y == 0.0f)
+                velocity.y += 10.0f;
+        }
+        if (!physics)
+        {
             if (velocity.y == 0.0f)
                 velocity.y += 10.0f;
         }
@@ -238,6 +258,31 @@ void Camera::tick(float currentTime)
                 // Apply deceleration to X and Z only
                 velocity.x -= decelerationVector.x;
                 velocity.z -= decelerationVector.z;
+            }
+        }
+    }
+    if (!physics)
+    {
+        if (glm::length(accelerationVector) == 0.0f)
+        {
+            if (glm::length(velocity) > 0.0f)
+            {
+                glm::vec3 decelerationVector = glm::normalize(velocity) * deceleration * (float)deltaTime;
+
+                // Only apply deceleration to the X and Z components
+                if (glm::length(decelerationVector) > glm::length(velocity))
+                {
+                    velocity.x = 0.0f;
+                    velocity.y = 0.0f;
+                    velocity.z = 0.0f;
+                }
+                else
+                {
+                    // Apply deceleration to X and Z only
+                    velocity.x -= decelerationVector.x;
+                    velocity.y -= decelerationVector.y;
+                    velocity.z -= decelerationVector.z;
+                }
             }
         }
     }
