@@ -20,15 +20,13 @@ bool World::chunkDataExists(ChunkPos pos)
 
 void generateWater(std::vector<char> &data, ChunkPos pos)
 {
-    int waterHeight = 48;
-
     for (int i = 0; i < CHUNK_SIZE; i++)
     {
         for (int k = 0; k < CHUNK_SIZE; k++)
         {
             for (int j = 0; j < CHUNK_HEIGHT; j++)
             {
-                if (j > waterHeight)
+                if (j > WATER_LEVEL)
                     continue;
 
                 if (data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
@@ -42,8 +40,8 @@ void generateWater(std::vector<char> &data, ChunkPos pos)
 
 void generateCaves(std::vector<char> &data, ChunkPos pos)
 {
-    double freq = 0.03;   // Reduced frequency for larger caves
-    double density = 0.2; // Adjust density to make caves rarer
+    double freq = 0.05;    // Reduced frequency for larger caves
+    double density = 0.28; // Adjust density to make caves rarer
 
     for (int i = 0; i < CHUNK_SIZE; i++)
     {
@@ -60,20 +58,7 @@ void generateCaves(std::vector<char> &data, ChunkPos pos)
                 if (noise < (0.60 - density))
                 {
                     BLOCK block = (BLOCK)data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)];
-                    if (block == BLOCK::GRASS_BLOCK || block == BLOCK::DIRT_BLOCK)
-                    {
-                        // Create a random number generator and seed it
-                        std::mt19937 generator((unsigned int)(freq * (pos.x * CHUNK_SIZE + i), freq * j, freq * (pos.z * CHUNK_SIZE + k)));
-
-                        // Define a distribution (uniform distribution in this case)
-                        std::uniform_int_distribution<int> distribution(1, 2);
-
-                        // Generate a random number
-                        int randomNumber = distribution(generator);
-                        if (randomNumber == 1)
-                            continue;
-                    }
-                    if (block == WATER_BLOCK)
+                    if (block == BLOCK::SAND_BLOCK || block == BLOCK::WATER_BLOCK)
                         continue;
                     data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
                 }
@@ -84,75 +69,69 @@ void generateCaves(std::vector<char> &data, ChunkPos pos)
 
 void World::generateChunkData(ChunkPos pos)
 {
-    std::vector<char> data;
-    data.resize(BLOCKS_PER_CHUNK);
+    std::vector<char> data(BLOCKS_PER_CHUNK);
 
-    for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
+    // Lambda to calculate index in the data vector
+    auto index = [&](int x, int y, int z) -> int
     {
-        bool rockyTops = false;
-        bool snowyTops = false;
-        bool sandyTops = false;
-        for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
+        return x + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    };
+
+    // Lambda to assign block type based on conditions
+    auto assignBlock = [&](int x, int y, int z, bool rockyTops, bool snowyTops, bool sandyTops, int blocksInHeight)
+    {
+        if (blocksInHeight >= 3)
         {
+            data[index(x, y, z)] = BLOCK::STONE_BLOCK;
+        }
+        else if (rockyTops)
+        {
+            data[index(x, y, z)] = BLOCK::STONE_BLOCK;
+        }
+        else if (snowyTops)
+        {
+            data[index(x, y, z)] = BLOCK::SNOW_BLOCK;
+        }
+        else if (sandyTops)
+        {
+            data[index(x, y, z)] = BLOCK::SAND_BLOCK;
+        }
+        else
+        {
+            data[index(x, y, z)] = (blocksInHeight >= 1) ? BLOCK::DIRT_BLOCK : BLOCK::GRASS_BLOCK;
+        }
+    };
+
+    // Loop through X and Z axes
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int z = 0; z < CHUNK_SIZE; z++)
+        {
+            // Get Perlin noise value for terrain height
             double freq = 0.003;
-            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + i), freq * (pos.z * CHUNK_SIZE + k), 8);
+            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + x), freq * (pos.z * CHUNK_SIZE + z), 8);
+            int terrainHeight = static_cast<int>(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
+
+            // Determine top conditions
+            bool rockyTops = (terrainHeight > 110 && terrainHeight < 118);
+            bool snowyTops = (terrainHeight >= 118);
+            bool sandyTops = (terrainHeight < WATER_LEVEL + 2);
+
             int blocksInHeight = 0;
-            int terrainHeight = (int)(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
-            // std::cout << terrainHeight << std::endl;
-            if (terrainHeight > 110 && terrainHeight < 115)
-            {
-                rockyTops = true;
-            }
-            else if (terrainHeight >= 115)
-            {
-                snowyTops = true;
-            }
 
-            for (int j = CHUNK_HEIGHT - 1; j >= 0; j--) // Y-axis
+            // Loop through Y-axis (top-down)
+            for (int y = CHUNK_HEIGHT - 1; y >= 0; y--)
             {
-                if (blocksInHeight >= 1)
+                if (y <= terrainHeight)
                 {
-                    if (blocksInHeight >= 3)
-                    {
-                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
-                    }
-                    else
-                    {
-                        if (rockyTops)
-                        {
-                            data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
-                        }
-                        else if (snowyTops)
-                        {
-                            data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::SNOW_BLOCK;
-                        }
-                        else
-                        {
-                            data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::DIRT_BLOCK;
-                        }
-                    }
-
-                    blocksInHeight++;
-                }
-                else if (j < terrainHeight)
-                {
-                    if (rockyTops)
-                    {
-                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
-                    }
-                    else if (snowyTops)
-                    {
-                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::SNOW_BLOCK;
-                    }
-                    else
-                    {
-                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::GRASS_BLOCK;
-                    }
+                    // Fill blocks based on height and top conditions
+                    assignBlock(x, y, z, rockyTops, snowyTops, sandyTops, blocksInHeight);
                     blocksInHeight++;
                 }
                 else
                 {
-                    data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
+                    // Empty space (AIR_BLOCK) above terrain height
+                    data[index(x, y, z)] = BLOCK::AIR_BLOCK;
                 }
             }
         }

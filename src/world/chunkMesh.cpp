@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 10;
+int render_distance = 25;
 
 void World::bindChunkOpaque(ChunkMesh &chunkMesh)
 {

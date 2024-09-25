@@ -88,7 +88,7 @@ void Camera::tick(float currentTime)
     cameraFront = glm::normalize(direction);
 
     // std::cout << "front: (" << cameraFront.x << ", " << cameraFront.y << ", " << cameraFront.z << ") " << std::endl;
-    std::cout << "pos: (" << cameraPos.x << ", \t\t" << cameraPos.y << ", \t\t" << cameraPos.z << ") " << std::endl;
+    // std::cout << "pos: (" << cameraPos.x << ", \t\t" << cameraPos.y << ", \t\t" << cameraPos.z << ") " << std::endl;
 
     // Update camera right vector (cross product of cameraFront and world up)
     glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f)));
