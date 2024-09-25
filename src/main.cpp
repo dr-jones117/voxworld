@@ -129,7 +129,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 
 int main(void)
 {
-    player->setPhysics(false);
+    player->setPhysics(true);
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())
@@ -162,7 +162,7 @@ int main(void)
         return -1;
     }
 
-    // glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);

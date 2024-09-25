@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 5;
+int render_distance = 10;
 
 void World::bindChunk(ChunkMesh &chunkMesh)
 {
@@ -48,95 +48,119 @@ void World::generateChunkMesh(ChunkPos pos)
     {
         for (int y = 0; y < CHUNK_HEIGHT; y++) // Z-axis
         {
-            for (int z = 0; z < CHUNK_SIZE; z++) // Y-axis
-            {
-                BLOCK block = (BLOCK)chunkData[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
-
-                BlockRenderInfo renderInfo = {
-                    block,
-                    (char)0,
-                    glm::vec3((pos.x * CHUNK_SIZE) + x, y, (pos.z * CHUNK_SIZE) + z),
-                    chunkMesh.vertices,
-                    chunkMesh.indices,
-                    indiceOffset,
-                };
-
-                // North face
-                int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (z <= 0)
-                {
-                    if (northChunkData.size() > 0 && northChunkData[x + (y * CHUNK_SIZE) + ((CHUNK_SIZE - 1) * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 1;
-                    }
-                }
-                else if (chunkData[northIndex] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 1;
-                }
-
-                // South face
-                int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (z >= CHUNK_SIZE - 1)
-                {
-                    if (southChunkData.size() > 0 && southChunkData[x + (y * CHUNK_SIZE) + (0 * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 2;
-                    }
-                }
-                else if (chunkData[southIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 2;
-                }
-
-                // West face
-                int westIdx = (x - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (x <= 0)
-                {
-                    if (westChunkData.size() > 0 && westChunkData[(CHUNK_SIZE - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 4;
-                    }
-                }
-                else if (chunkData[westIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 4;
-                }
-
-                // East face
-                int eastIdx = (x + 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (x >= CHUNK_SIZE - 1)
-                {
-                    if (eastChunkData.size() > 0 && eastChunkData[0 + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 8;
-                    }
-                }
-                else if (chunkData[eastIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 8;
-                }
-
-                // Bottom face
-                int bottomIdx = x + ((y - 1) * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (y <= 0 || chunkData[bottomIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 16;
-                }
-                // Top face
-                int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
-                if (y >= CHUNK_HEIGHT - 1 || chunkData[topIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 32;
-                }
-
-                blockRenderFunctions[block](renderInfo);
-            }
         }
     }
 
     std::unique_lock<std::mutex> mesh_lock(mesh_mtx);
     chunkMeshMap[pos] = chunkMesh;
+}
+
+typedef struct
+{
+    std::vector<char> chunkData;
+    std::vector<char> northChunkData;
+    std::vector<char> southChunkData;
+    std::vector<char> westChunkData;
+    std::vector<char> eastChunkData;
+} ChunkData;
+
+void renderLiquidBlock(BLOCK block, int x, int y, int z, BlockRenderInfo &renderInfo, ChunkData &chunkData)
+{
+    int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
+    int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
+    int westIdx = (x - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    int eastIdx = (x + 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    int bottomIdx = x + ((y - 1) * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
+
+    // Bottom face
+    if (y <= 0 || chunkData.chunkData[bottomIdx] != block)
+    {
+        renderInfo.cover = renderInfo.cover | 16;
+    }
+
+    // Top face
+    if (y >= CHUNK_HEIGHT - 1 || chunkData.chunkData[topIdx] != block)
+    {
+        renderInfo.cover = renderInfo.cover | 32;
+    }
+}
+
+void renderSolidBlock(int x, int y, int z, BlockRenderInfo &renderInfo, ChunkData &chunkData)
+{
+    // North face
+    int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
+    if (z <= 0)
+    {
+        // check the north chunks data
+        BLOCK northBlock = (BLOCK)chunkData.northChunkData[x + (y * CHUNK_SIZE) + ((CHUNK_SIZE - 1) * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (northBlock == BLOCK::AIR_BLOCK || northBlock == BLOCK::WATER_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 1;
+        }
+    }
+    else if (chunkData.chunkData[northIndex] == BLOCK::AIR_BLOCK || chunkData.chunkData[northIndex] == BLOCK::WATER_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 1;
+    }
+
+    // South face
+    int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
+    if (z >= CHUNK_SIZE - 1)
+    {
+        BLOCK southBlock = (BLOCK)chunkData.southChunkData[x + (y * CHUNK_SIZE) + (0 * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (southBlock == BLOCK::AIR_BLOCK || southBlock == BLOCK::WATER_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 2;
+        }
+    }
+    else if (chunkData.chunkData[southIdx] == BLOCK::AIR_BLOCK || chunkData.chunkData[southIdx] == BLOCK::WATER_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 2;
+    }
+
+    // West face
+    int westIdx = (x - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    if (x <= 0)
+    {
+        BLOCK westBlock = (BLOCK)chunkData.westChunkData[(CHUNK_SIZE - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (westBlock == BLOCK::AIR_BLOCK || westBlock == BLOCK::WATER_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 4;
+        }
+    }
+    else if (chunkData.chunkData[westIdx] == BLOCK::AIR_BLOCK || chunkData.chunkData[westIdx] == BLOCK::WATER_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 4;
+    }
+
+    // East face
+    int eastIdx = (x + 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    if (x >= CHUNK_SIZE - 1)
+    {
+        BLOCK eastBlock = (BLOCK)chunkData.eastChunkData[0 + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (eastBlock == BLOCK::AIR_BLOCK || eastBlock == BLOCK::WATER_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 8;
+        }
+    }
+    else if (chunkData.chunkData[eastIdx] == BLOCK::AIR_BLOCK || chunkData.chunkData[eastIdx] == BLOCK::WATER_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 8;
+    }
+
+    // Bottom face
+    int bottomIdx = x + ((y - 1) * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    if (y <= 0 || chunkData.chunkData[bottomIdx] == BLOCK::AIR_BLOCK || chunkData.chunkData[bottomIdx] == BLOCK::WATER_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 16;
+    }
+    // Top face
+    int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
+    if (y >= CHUNK_HEIGHT - 1 || chunkData.chunkData[topIdx] == BLOCK::AIR_BLOCK || chunkData.chunkData[topIdx] == BLOCK::WATER_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 32;
+    }
 }
 
 void World::generateNextMesh()
@@ -161,13 +185,15 @@ void World::generateNextMesh()
 
     unsigned int indiceOffset = 0;
 
-    auto chunkData = getChunkDataIfExists({pos.x, pos.z});
-    auto northChunkData = getChunkDataIfExists({pos.x, pos.z - 1});
-    auto southChunkData = getChunkDataIfExists({pos.x, pos.z + 1});
-    auto westChunkData = getChunkDataIfExists({pos.x - 1, pos.z});
-    auto eastChunkData = getChunkDataIfExists({pos.x + 1, pos.z});
+    ChunkData chunkData = {
+        getChunkDataIfExists({pos.x, pos.z}),
+        getChunkDataIfExists({pos.x, pos.z - 1}),
+        getChunkDataIfExists({pos.x, pos.z + 1}),
+        getChunkDataIfExists({pos.x - 1, pos.z}),
+        getChunkDataIfExists({pos.x + 1, pos.z}),
+    };
 
-    assert(chunkData.size() > 0 && northChunkData.size() > 0 && southChunkData.size() > 0 && westChunkData.size() > 0 && eastChunkData.size() > 0);
+    assert(chunkData.chunkData.size() > 0 && chunkData.northChunkData.size() > 0 && chunkData.southChunkData.size() > 0 && chunkData.westChunkData.size() > 0 && chunkData.eastChunkData.size() > 0);
 
     for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
     {
@@ -175,8 +201,7 @@ void World::generateNextMesh()
         {
             for (int z = 0; z < CHUNK_SIZE; z++) // Y-axis
             {
-                BLOCK block = (BLOCK)chunkData[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
-
+                BLOCK block = (BLOCK)chunkData.chunkData[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
                 BlockRenderInfo renderInfo = {
                     block,
                     (char)0,
@@ -186,75 +211,14 @@ void World::generateNextMesh()
                     indiceOffset,
                 };
 
-                // North face
-                int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (z <= 0)
+                if (block == BLOCK::WATER_BLOCK)
                 {
-                    if (northChunkData.size() > 0 && northChunkData[x + (y * CHUNK_SIZE) + ((CHUNK_SIZE - 1) * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 1;
-                    }
+                    renderLiquidBlock(block, x, y, z, renderInfo, chunkData);
                 }
-                else if (chunkData[northIndex] == BLOCK::AIR_BLOCK)
+                else
                 {
-                    renderInfo.cover = renderInfo.cover | 1;
+                    renderSolidBlock(x, y, z, renderInfo, chunkData);
                 }
-
-                // South face
-                int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (z >= CHUNK_SIZE - 1)
-                {
-                    if (southChunkData.size() > 0 && southChunkData[x + (y * CHUNK_SIZE) + (0 * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 2;
-                    }
-                }
-                else if (chunkData[southIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 2;
-                }
-
-                // West face
-                int westIdx = (x - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (x <= 0)
-                {
-                    if (westChunkData.size() > 0 && westChunkData[(CHUNK_SIZE - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 4;
-                    }
-                }
-                else if (chunkData[westIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 4;
-                }
-
-                // East face
-                int eastIdx = (x + 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (x >= CHUNK_SIZE - 1)
-                {
-                    if (eastChunkData.size() > 0 && eastChunkData[0 + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
-                    {
-                        renderInfo.cover = renderInfo.cover | 8;
-                    }
-                }
-                else if (chunkData[eastIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 8;
-                }
-
-                // Bottom face
-                int bottomIdx = x + ((y - 1) * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
-                if (y <= 0 || chunkData[bottomIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 16;
-                }
-                // Top face
-                int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
-                if (y >= CHUNK_HEIGHT - 1 || chunkData[topIdx] == BLOCK::AIR_BLOCK)
-                {
-                    renderInfo.cover = renderInfo.cover | 32;
-                }
-
                 blockRenderFunctions[block](renderInfo);
             }
         }

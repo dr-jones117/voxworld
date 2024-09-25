@@ -18,6 +18,28 @@ bool World::chunkDataExists(ChunkPos pos)
     return true;
 }
 
+void generateWater(std::vector<char> &data, ChunkPos pos)
+{
+    int waterHeight = 50;
+
+    for (int i = 0; i < CHUNK_SIZE; i++)
+    {
+        for (int k = 0; k < CHUNK_SIZE; k++)
+        {
+            for (int j = 0; j < CHUNK_HEIGHT; j++)
+            {
+                if (j > waterHeight)
+                    continue;
+
+                if (data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] == BLOCK::AIR_BLOCK)
+                {
+                    data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::WATER_BLOCK;
+                }
+            }
+        }
+    }
+}
+
 void generateCaves(std::vector<char> &data, ChunkPos pos)
 {
     double freq = 0.03;   // Reduced frequency for larger caves
@@ -51,6 +73,8 @@ void generateCaves(std::vector<char> &data, ChunkPos pos)
                         if (randomNumber == 1)
                             continue;
                     }
+                    if (block == WATER_BLOCK)
+                        continue;
                     data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
                 }
             }
@@ -66,6 +90,8 @@ void World::generateChunkData(ChunkPos pos)
     for (int i = 0; i < CHUNK_SIZE; i++) // X-axis
     {
         bool rockyTops = false;
+        bool snowyTops = false;
+        bool sandyTops = false;
         for (int k = 0; k < CHUNK_SIZE; k++) // Z-axis
         {
             double freq = 0.003;
@@ -73,9 +99,13 @@ void World::generateChunkData(ChunkPos pos)
             int blocksInHeight = 0;
             int terrainHeight = (int)(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
             // std::cout << terrainHeight << std::endl;
-            if (terrainHeight > 110)
+            if (terrainHeight > 110 && terrainHeight < 115)
             {
                 rockyTops = true;
+            }
+            else if (terrainHeight >= 115)
+            {
+                snowyTops = true;
             }
 
             for (int j = CHUNK_HEIGHT - 1; j >= 0; j--) // Y-axis
@@ -92,6 +122,10 @@ void World::generateChunkData(ChunkPos pos)
                         {
                             data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
                         }
+                        else if (snowyTops)
+                        {
+                            data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::SNOW_BLOCK;
+                        }
                         else
                         {
                             data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::DIRT_BLOCK;
@@ -105,6 +139,10 @@ void World::generateChunkData(ChunkPos pos)
                     if (rockyTops)
                     {
                         data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::STONE_BLOCK;
+                    }
+                    else if (snowyTops)
+                    {
+                        data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::SNOW_BLOCK;
                     }
                     else
                     {
@@ -120,6 +158,7 @@ void World::generateChunkData(ChunkPos pos)
         }
     }
 
+    generateWater(data, pos);
     generateCaves(data, pos);
 
     std::lock_guard<std::mutex> lock(data_mtx);
