@@ -102,20 +102,44 @@ void World::generateChunkData(ChunkPos pos)
         }
     };
 
+    // Lambda for linear interpolation (LERP)
+    auto lerp = [](double a, double b, double t) -> double
+    {
+        return a + t * (b - a);
+    };
+
+    float regionFreq = 0.001;
+
     // Loop through X and Z axes
     for (int x = 0; x < CHUNK_SIZE; x++)
     {
         for (int z = 0; z < CHUNK_SIZE; z++)
         {
-            // Get Perlin noise value for terrain height
-            double freq = 0.003;
-            double noise = perlin.octave2D_01(freq * (pos.x * CHUNK_SIZE + x), freq * (pos.z * CHUNK_SIZE + z), 8);
-            int terrainHeight = static_cast<int>(noise * (CHUNK_HEIGHT - (CHUNK_HEIGHT / 2))) + (CHUNK_HEIGHT / 8);
+            // Generate region noise to determine blending weight between plains, hills, and mountains
+            double regionNoise = perlin.octave2D_01(regionFreq * (pos.x * CHUNK_SIZE + x), regionFreq * (pos.z * CHUNK_SIZE + z), 4);
 
-            // Determine top conditions
+            // Define frequencies and heights for different region types
+            double plainsFreq = 0.005, hillsFreq = 0.007, mountainsFreq = 0.02;
+            double plainsHeightScale = CHUNK_HEIGHT / 4, hillsHeightScale = CHUNK_HEIGHT / 2, mountainsHeightScale = CHUNK_HEIGHT;
+
+            // Determine blend weights based on regionNoise
+            double plainsWeight = (regionNoise < 0.4) ? (1.0 - regionNoise / 0.4) : 0.0;                      // Strong in plains zone
+            double hillsWeight = (regionNoise >= 0.4 && regionNoise < 0.7) ? (regionNoise - 0.4) / 0.3 : 0.0; // Middle zone (hills)
+            double mountainsWeight = (regionNoise >= 0.7) ? (regionNoise - 0.7) / 0.3 : 0.0;                  // Strong in mountain zone
+
+            // Blend frequency and height scales based on weights
+            double blendedFreq = lerp(lerp(plainsFreq, hillsFreq, plainsWeight), mountainsFreq, mountainsWeight);
+            double blendedHeightScale = lerp(lerp(plainsHeightScale, hillsHeightScale, plainsWeight), mountainsHeightScale, mountainsWeight);
+
+            // Get terrain noise using blended frequency
+            double noise = perlin.octave2D_01(blendedFreq * (pos.x * CHUNK_SIZE + x), blendedFreq * (pos.z * CHUNK_SIZE + z), 12);
+
+            // Scale terrain height based on the blended height scale
+            int terrainHeight = static_cast<int>((noise - 0.1) * blendedHeightScale) + (CHUNK_HEIGHT / 8);
+
             bool rockyTops = (terrainHeight > 110 && terrainHeight < 118);
             bool snowyTops = (terrainHeight >= 118);
-            bool sandyTops = (terrainHeight < WATER_LEVEL + 2);
+            bool sandyTops = (terrainHeight < WATER_LEVEL + 3);
 
             int blocksInHeight = 0;
 
