@@ -58,7 +58,7 @@ void generateCaves(std::vector<char> &data, ChunkPos pos)
                 if (noise < (0.60 - density))
                 {
                     BLOCK block = (BLOCK)data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)];
-                    if (block == BLOCK::SAND_BLOCK || block == BLOCK::WATER_BLOCK)
+                    if (block == BLOCK::BEDROCK_BLOCK || block == BLOCK::SAND_BLOCK || block == BLOCK::WATER_BLOCK)
                         continue;
                     data[i + (j * CHUNK_SIZE) + (k * CHUNK_SIZE * CHUNK_HEIGHT)] = BLOCK::AIR_BLOCK;
                 }
@@ -80,7 +80,11 @@ void World::generateChunkData(ChunkPos pos)
     // Lambda to assign block type based on conditions
     auto assignBlock = [&](int x, int y, int z, bool rockyTops, bool snowyTops, bool sandyTops, int blocksInHeight)
     {
-        if (blocksInHeight >= 3)
+        if (y < 3)
+        {
+            data[index(x, y, z)] = BLOCK::BEDROCK_BLOCK;
+        }
+        else if (blocksInHeight >= 3)
         {
             data[index(x, y, z)] = BLOCK::STONE_BLOCK;
         }
@@ -108,7 +112,7 @@ void World::generateChunkData(ChunkPos pos)
         return a + t * (b - a);
     };
 
-    float regionFreq = 0.001;
+    float regionFreq = 0.005;
 
     // Loop through X and Z axes
     for (int x = 0; x < CHUNK_SIZE; x++)
@@ -119,8 +123,8 @@ void World::generateChunkData(ChunkPos pos)
             double regionNoise = perlin.octave2D_01(regionFreq * (pos.x * CHUNK_SIZE + x), regionFreq * (pos.z * CHUNK_SIZE + z), 4);
 
             // Define frequencies and heights for different region types
-            double plainsFreq = 0.005, hillsFreq = 0.007, mountainsFreq = 0.02;
-            double plainsHeightScale = CHUNK_HEIGHT / 4, hillsHeightScale = CHUNK_HEIGHT / 2, mountainsHeightScale = CHUNK_HEIGHT;
+            double plainsFreq = 0.005, hillsFreq = 0.007, mountainsFreq = 0.03;
+            double plainsHeightScale = CHUNK_HEIGHT / 4, hillsHeightScale = CHUNK_HEIGHT / 2, mountainsHeightScale = CHUNK_HEIGHT - 10;
 
             // Determine blend weights based on regionNoise
             double plainsWeight = (regionNoise < 0.4) ? (1.0 - regionNoise / 0.4) : 0.0;                      // Strong in plains zone
@@ -135,7 +139,7 @@ void World::generateChunkData(ChunkPos pos)
             double noise = perlin.octave2D_01(blendedFreq * (pos.x * CHUNK_SIZE + x), blendedFreq * (pos.z * CHUNK_SIZE + z), 12);
 
             // Scale terrain height based on the blended height scale
-            int terrainHeight = static_cast<int>((noise - 0.1) * blendedHeightScale) + (CHUNK_HEIGHT / 8);
+            int terrainHeight = static_cast<int>(noise * blendedHeightScale) + (CHUNK_HEIGHT / 8);
 
             bool rockyTops = (terrainHeight > 110 && terrainHeight < 118);
             bool snowyTops = (terrainHeight >= 118);
