@@ -14,11 +14,18 @@
 
 int render_distance = 10;
 
-void World::bindChunk(ChunkMesh &chunkMesh)
+void World::bindChunkOpaque(ChunkMesh &chunkMesh)
 {
-    GLCall(glBindVertexArray(chunkMesh.VAO));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, chunkMesh.VBO));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunkMesh.EBO));
+    GLCall(glBindVertexArray(chunkMesh.VAO_opaque));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, chunkMesh.VBO_opaque));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunkMesh.EBO_opaque));
+}
+
+void World::bindChunkTransparent(ChunkMesh &chunkMesh)
+{
+    GLCall(glBindVertexArray(chunkMesh.VAO_transparent));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, chunkMesh.VBO_transparent));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunkMesh.EBO_transparent));
 }
 
 void World::unbindChunk(ChunkMesh &chunkMesh)
@@ -26,33 +33,6 @@ void World::unbindChunk(ChunkMesh &chunkMesh)
     GLCall(glBindVertexArray(0));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-}
-
-void World::generateChunkMesh(ChunkPos pos)
-{
-    ChunkMesh chunkMesh;
-    chunkMesh.pos = pos;
-    chunkMesh.isInitialized = false;
-
-    unsigned int indiceOffset = 0;
-
-    auto chunkData = getChunkDataIfExists({pos.x, pos.z});
-    auto northChunkData = getChunkDataIfExists({pos.x, pos.z - 1});
-    auto southChunkData = getChunkDataIfExists({pos.x, pos.z + 1});
-    auto westChunkData = getChunkDataIfExists({pos.x - 1, pos.z});
-    auto eastChunkData = getChunkDataIfExists({pos.x + 1, pos.z});
-
-    assert(chunkData.size() > 0 && northChunkData.size() > 0 && southChunkData.size() > 0 && westChunkData.size() > 0 && eastChunkData.size() > 0);
-
-    for (int x = 0; x < CHUNK_SIZE; x++) // X-axis
-    {
-        for (int y = 0; y < CHUNK_HEIGHT; y++) // Z-axis
-        {
-        }
-    }
-
-    std::unique_lock<std::mutex> mesh_lock(mesh_mtx);
-    chunkMeshMap[pos] = chunkMesh;
 }
 
 typedef struct
@@ -74,7 +54,7 @@ void renderLiquidBlock(BLOCK block, int x, int y, int z, BlockRenderInfo &render
     int topIdx = x + ((y + 1) * CHUNK_SIZE) + ((z)*CHUNK_SIZE * CHUNK_HEIGHT);
 
     // Bottom face
-    if (y <= 0 || chunkData.chunkData[bottomIdx] != block)
+    if (y <= 0 || (chunkData.chunkData[bottomIdx] != block && chunkData.chunkData[bottomIdx] == BLOCK::AIR_BLOCK))
     {
         renderInfo.cover = renderInfo.cover | 16;
     }
@@ -182,8 +162,10 @@ void World::generateNextMesh()
     ChunkMesh chunkMesh;
     chunkMesh.pos = pos;
     chunkMesh.isInitialized = false;
+    chunkMesh.transparentInitialized = false;
 
     unsigned int indiceOffset = 0;
+    unsigned int transparentIndiceOffset = 0;
 
     ChunkData chunkData = {
         getChunkDataIfExists({pos.x, pos.z}),
@@ -202,24 +184,33 @@ void World::generateNextMesh()
             for (int z = 0; z < CHUNK_SIZE; z++) // Y-axis
             {
                 BLOCK block = (BLOCK)chunkData.chunkData[x + y * CHUNK_SIZE + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
-                BlockRenderInfo renderInfo = {
-                    block,
-                    (char)0,
-                    glm::vec3((pos.x * CHUNK_SIZE) + x, y, (pos.z * CHUNK_SIZE) + z),
-                    chunkMesh.vertices,
-                    chunkMesh.indices,
-                    indiceOffset,
-                };
 
                 if (block == BLOCK::WATER_BLOCK)
                 {
-                    renderLiquidBlock(block, x, y, z, renderInfo, chunkData);
+                    BlockRenderInfo liquidRenderInfo = {
+                        block,
+                        (char)0,
+                        glm::vec3((pos.x * CHUNK_SIZE) + x, y, (pos.z * CHUNK_SIZE) + z),
+                        chunkMesh.vertices_transparent,
+                        chunkMesh.indices_transparent,
+                        transparentIndiceOffset,
+                    };
+                    renderLiquidBlock(block, x, y, z, liquidRenderInfo, chunkData);
+                    blockRenderFunctions[block](liquidRenderInfo);
                 }
                 else
                 {
-                    renderSolidBlock(x, y, z, renderInfo, chunkData);
+                    BlockRenderInfo renderOpaqueInfo = {
+                        block,
+                        (char)0,
+                        glm::vec3((pos.x * CHUNK_SIZE) + x, y, (pos.z * CHUNK_SIZE) + z),
+                        chunkMesh.vertices_opaque,
+                        chunkMesh.indices_opaque,
+                        indiceOffset,
+                    };
+                    renderSolidBlock(x, y, z, renderOpaqueInfo, chunkData);
+                    blockRenderFunctions[block](renderOpaqueInfo);
                 }
-                blockRenderFunctions[block](renderInfo);
             }
         }
     }
@@ -228,13 +219,13 @@ void World::generateNextMesh()
     chunkMeshMap[pos] = chunkMesh;
 }
 
-void World::initializeChunkGL(ChunkMesh &chunkMesh)
+void World::initializeTransparentChunk(ChunkMesh &chunkMesh)
 {
-    GLCall(glGenVertexArrays(1, &chunkMesh.VAO));
-    GLCall(glGenBuffers(1, &chunkMesh.VBO));
-    GLCall(glGenBuffers(1, &chunkMesh.EBO));
+    GLCall(glGenVertexArrays(1, &chunkMesh.VAO_transparent));
+    GLCall(glGenBuffers(1, &chunkMesh.VBO_transparent));
+    GLCall(glGenBuffers(1, &chunkMesh.EBO_transparent));
 
-    bindChunk(chunkMesh);
+    bindChunkTransparent(chunkMesh);
 
     GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0));
     GLCall(glEnableVertexAttribArray(0));
@@ -242,8 +233,30 @@ void World::initializeChunkGL(ChunkMesh &chunkMesh)
     GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)sizeof(glm::vec3)));
     GLCall(glEnableVertexAttribArray(1));
 
-    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunkMesh.vertices.size(), &chunkMesh.vertices.front(), GL_STATIC_DRAW));
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * chunkMesh.indices.size(), &chunkMesh.indices.front(), GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunkMesh.vertices_transparent.size(), &chunkMesh.vertices_transparent.front(), GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * chunkMesh.indices_transparent.size(), &chunkMesh.indices_transparent.front(), GL_STATIC_DRAW));
+
+    unbindChunk(chunkMesh);
+
+    chunkMesh.transparentInitialized = true;
+}
+
+void World::initializeOpaqueChunk(ChunkMesh &chunkMesh)
+{
+    GLCall(glGenVertexArrays(1, &chunkMesh.VAO_opaque));
+    GLCall(glGenBuffers(1, &chunkMesh.VBO_opaque));
+    GLCall(glGenBuffers(1, &chunkMesh.EBO_opaque));
+
+    bindChunkOpaque(chunkMesh);
+
+    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0));
+    GLCall(glEnableVertexAttribArray(0));
+
+    GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)sizeof(glm::vec3)));
+    GLCall(glEnableVertexAttribArray(1));
+
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * chunkMesh.vertices_opaque.size(), &chunkMesh.vertices_opaque.front(), GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * chunkMesh.indices_opaque.size(), &chunkMesh.indices_opaque.front(), GL_STATIC_DRAW));
 
     unbindChunk(chunkMesh);
 
@@ -253,20 +266,45 @@ void World::initializeChunkGL(ChunkMesh &chunkMesh)
 void World::renderChunkMeshes()
 {
     std::lock_guard<std::mutex> lock(mesh_mtx);
+
+    // Render opaque chunks first (with depth writing and depth testing enabled)
     for (auto &pair : chunkMeshMap)
     {
         ChunkMesh &chunk = pair.second;
-        if (chunk.indices.size() <= 0)
-            return;
-        if (!chunk.isInitialized)
-            initializeChunkGL(chunk);
 
-        bindChunk(chunk);
+        if (chunk.indices_opaque.size() > 0)
+        {
+            if (!chunk.isInitialized)
+                initializeOpaqueChunk(chunk);
 
-        GLCall(glDrawElements(GL_TRIANGLES, chunk.indices.size(), GL_UNSIGNED_INT, (void *)0));
-
-        unbindChunk(chunk);
+            bindChunkOpaque(chunk);
+            GLCall(glDrawElements(GL_TRIANGLES, chunk.indices_opaque.size(), GL_UNSIGNED_INT, (void *)0));
+            unbindChunk(chunk);
+        }
     }
+
+    // Enable blending for transparency
+    glDepthMask(GL_FALSE); // Disable depth writing for transparent blocks, but leave depth testing on
+    glDisable(GL_CULL_FACE);
+    // Render transparent chunks next
+    for (auto &pair : chunkMeshMap)
+    {
+        ChunkMesh &chunk = pair.second;
+
+        if (chunk.indices_transparent.size() > 0)
+        {
+            if (!chunk.transparentInitialized)
+                initializeTransparentChunk(chunk);
+
+            bindChunkTransparent(chunk);
+            GLCall(glDrawElements(GL_TRIANGLES, chunk.indices_transparent.size(), GL_UNSIGNED_INT, (void *)0));
+            unbindChunk(chunk);
+        }
+    }
+
+    // Re-enable depth writing and disable blending
+    glEnable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
 }
 
 bool World::chunkMeshExists(ChunkPos pos)

@@ -28,6 +28,7 @@ typedef struct
 } BlockRenderInfo;
 
 void renderRegularBlock(BlockRenderInfo &renderInfo);
+void renderLiquidBlock(BlockRenderInfo &renderInfo);
 void renderAirBlock(BlockRenderInfo &renderInfo);
 
 static std::unordered_map<BLOCK, std::vector<UVcoords>> blockTextureCoords = {
@@ -38,7 +39,7 @@ static std::unordered_map<BLOCK, std::vector<UVcoords>> blockTextureCoords = {
     {BLOCK::FOCUS, {getTextureCoordsFromAtlas(0, 4), getTextureCoordsFromAtlas(0, 4), getTextureCoordsFromAtlas(0, 4)}},
     {BLOCK::BEDROCK_BLOCK, {getTextureCoordsFromAtlas(0, 5), getTextureCoordsFromAtlas(0, 5), getTextureCoordsFromAtlas(0, 5)}},
     {BLOCK::SNOW_BLOCK, {getTextureCoordsFromAtlas(0, 6), getTextureCoordsFromAtlas(0, 6), getTextureCoordsFromAtlas(0, 6)}},
-    {BLOCK::WATER_BLOCK, {getTextureCoordsFromAtlas(0, 7), getTextureCoordsFromAtlas(0, 7), getTextureCoordsFromAtlas(0, 7)}},
+    {BLOCK::WATER_BLOCK, {getTextureCoordsFromAtlas(0, 7)}},
 };
 
 static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRenderFunctions = {
@@ -49,5 +50,5 @@ static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRen
     {BLOCK::FOCUS, renderRegularBlock},
     {BLOCK::BEDROCK_BLOCK, renderRegularBlock},
     {BLOCK::SNOW_BLOCK, renderRegularBlock},
-    {BLOCK::WATER_BLOCK, renderRegularBlock},
+    {BLOCK::WATER_BLOCK, renderLiquidBlock},
 };

@@ -61,14 +61,14 @@ private:
     void removeUnneededChunkData(ChunkPos pos);
 
     // chunk mesh
-    void initializeChunkGL(ChunkMesh &chunkMesh);
-    void bindChunk(ChunkMesh &chunkMesh);
+    void initializeOpaqueChunk(ChunkMesh &chunkMesh);
+    void initializeTransparentChunk(ChunkMesh &chunkMesh);
+    void bindChunkOpaque(ChunkMesh &chunkMesh);
+    void bindChunkTransparent(ChunkMesh &chunkMesh);
     void unbindChunk(ChunkMesh &chunkMesh);
-
     void addChunksToMeshQueue(ChunkPos pos);
 
     void renderChunkMeshes();
-    void generateChunkMesh(ChunkPos pos);
     void generateNextMesh();
 
     bool chunkMeshExists(ChunkPos pos);

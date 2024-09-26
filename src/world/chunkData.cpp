@@ -20,7 +20,7 @@ bool World::chunkDataExists(ChunkPos pos)
 
 void generateWater(std::vector<char> &data, ChunkPos pos)
 {
-    int waterHeight = 50;
+    int waterHeight = 48;
 
     for (int i = 0; i < CHUNK_SIZE; i++)
     {
@@ -189,7 +189,7 @@ void World::removeUnneededChunkData(ChunkPos pos)
     {
         ChunkPos currPos = pair.first;
         glm::vec2 vector = glm::vec2(currPos.x - pos.x, currPos.z - pos.z);
-        if ((int)glm::length(vector) > (render_distance + 3))
+        if ((int)glm::length(vector) > (render_distance + 6))
         {
             chunkPosToRemove.push_back(currPos);
         }
