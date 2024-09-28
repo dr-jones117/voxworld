@@ -15,7 +15,9 @@ enum BLOCK
     BEDROCK_BLOCK = 5,
     SNOW_BLOCK = 6,
     WATER_BLOCK = 7,
-    SAND_BLOCK = 8
+    SAND_BLOCK = 8,
+    OAK_WOOD = 9,
+    OAK_LEAVES = 10
 };
 
 typedef struct
@@ -42,6 +44,8 @@ static std::unordered_map<BLOCK, std::vector<UVcoords>> blockTextureCoords = {
     {BLOCK::SNOW_BLOCK, {getTextureCoordsFromAtlas(0, 6), getTextureCoordsFromAtlas(0, 6), getTextureCoordsFromAtlas(0, 6)}},
     {BLOCK::WATER_BLOCK, {getTextureCoordsFromAtlas(0, 7)}},
     {BLOCK::SAND_BLOCK, {getTextureCoordsFromAtlas(0, 8), getTextureCoordsFromAtlas(0, 8), getTextureCoordsFromAtlas(0, 8)}},
+    {BLOCK::OAK_WOOD, {getTextureCoordsFromAtlas(0, 9), getTextureCoordsFromAtlas(0, 9), getTextureCoordsFromAtlas(0, 9)}},
+    {BLOCK::OAK_LEAVES, {getTextureCoordsFromAtlas(0, 10), getTextureCoordsFromAtlas(0, 10), getTextureCoordsFromAtlas(0, 10)}},
 };
 
 static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRenderFunctions = {
