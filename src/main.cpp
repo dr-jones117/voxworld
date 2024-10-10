@@ -131,7 +131,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 
 int main(void)
 {
-    player->setPhysics(true);
+    player->setPhysics(false);
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())

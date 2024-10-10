@@ -44,7 +44,7 @@ typedef struct
     std::vector<char> eastChunkData;
 } ChunkData;
 
-void renderLiquidBlock(BLOCK block, int x, int y, int z, BlockRenderInfo &renderInfo, ChunkData &chunkData)
+void updateLiquidRenderInfo(BLOCK block, int x, int y, int z, LiquidRenderInfo &renderInfo, ChunkData &chunkData)
 {
     int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
     int southIdx = x + (y * CHUNK_SIZE) + ((z + 1) * CHUNK_SIZE * CHUNK_HEIGHT);
@@ -64,9 +64,70 @@ void renderLiquidBlock(BLOCK block, int x, int y, int z, BlockRenderInfo &render
     {
         renderInfo.cover = renderInfo.cover | 32;
     }
+    else
+    {
+        renderInfo.liquidOnTop = true;
+    }
+
+    // North face
+    if (z <= 0)
+    {
+        // check the north chunks data
+        BLOCK northBlock = (BLOCK)chunkData.northChunkData[x + (y * CHUNK_SIZE) + ((CHUNK_SIZE - 1) * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (northBlock == BLOCK::AIR_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 1;
+        }
+    }
+    else if (chunkData.chunkData[northIndex] == BLOCK::AIR_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 1;
+    }
+
+    // South face
+    if (z >= CHUNK_SIZE - 1)
+    {
+        BLOCK southBlock = (BLOCK)chunkData.southChunkData[x + (y * CHUNK_SIZE) + (0 * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (southBlock == BLOCK::AIR_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 2;
+        }
+    }
+    else if (chunkData.chunkData[southIdx] == BLOCK::AIR_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 2;
+    }
+
+    // West face
+    if (x <= 0)
+    {
+        BLOCK westBlock = (BLOCK)chunkData.westChunkData[(CHUNK_SIZE - 1) + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (westBlock == BLOCK::AIR_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 4;
+        }
+    }
+    else if (chunkData.chunkData[westIdx] == BLOCK::AIR_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 4;
+    }
+
+    // East face
+    if (x >= CHUNK_SIZE - 1)
+    {
+        BLOCK eastBlock = (BLOCK)chunkData.eastChunkData[0 + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT)];
+        if (eastBlock == BLOCK::AIR_BLOCK)
+        {
+            renderInfo.cover = renderInfo.cover | 8;
+        }
+    }
+    else if (chunkData.chunkData[eastIdx] == BLOCK::AIR_BLOCK)
+    {
+        renderInfo.cover = renderInfo.cover | 8;
+    }
 }
 
-void renderSolidBlock(int x, int y, int z, BlockRenderInfo &renderInfo, ChunkData &chunkData)
+void updateOpaqueRenderInfo(int x, int y, int z, BlockRenderInfo &renderInfo, ChunkData &chunkData)
 {
     // North face
     int northIndex = x + (y * CHUNK_SIZE) + ((z - 1) * CHUNK_SIZE * CHUNK_HEIGHT);
@@ -187,16 +248,17 @@ void World::generateNextMesh()
 
                 if (block == BLOCK::WATER_BLOCK)
                 {
-                    BlockRenderInfo liquidRenderInfo = {
+                    LiquidRenderInfo liquidRenderInfo = {
                         block,
                         (char)0,
                         glm::vec3((pos.x * CHUNK_SIZE) + x, y, (pos.z * CHUNK_SIZE) + z),
                         chunkMesh.vertices_transparent,
                         chunkMesh.indices_transparent,
                         transparentIndiceOffset,
+                        false,
                     };
-                    renderLiquidBlock(block, x, y, z, liquidRenderInfo, chunkData);
-                    blockRenderFunctions[block](liquidRenderInfo);
+                    updateLiquidRenderInfo(block, x, y, z, liquidRenderInfo, chunkData);
+                    liquidRenderFunctions[block](liquidRenderInfo);
                 }
                 else
                 {
@@ -208,7 +270,7 @@ void World::generateNextMesh()
                         chunkMesh.indices_opaque,
                         indiceOffset,
                     };
-                    renderSolidBlock(x, y, z, renderOpaqueInfo, chunkData);
+                    updateOpaqueRenderInfo(x, y, z, renderOpaqueInfo, chunkData);
                     blockRenderFunctions[block](renderOpaqueInfo);
                 }
             }
@@ -284,9 +346,9 @@ void World::renderChunkMeshes()
     }
 
     // Enable blending for transparency
-    glDepthMask(GL_FALSE); // Disable depth writing for transparent blocks, but leave depth testing on
+    // glDepthMask(GL_FALSE); // Disable depth writing for transparent blocks, but leave depth testing on
     glDisable(GL_CULL_FACE);
-    // Render transparent chunks next
+    //  Render transparent chunks next
     for (auto &pair : chunkMeshMap)
     {
         ChunkMesh &chunk = pair.second;
@@ -304,7 +366,7 @@ void World::renderChunkMeshes()
 
     // Re-enable depth writing and disable blending
     glEnable(GL_CULL_FACE);
-    glDepthMask(GL_TRUE);
+    // glDepthMask(GL_TRUE);
 }
 
 bool World::chunkMeshExists(ChunkPos pos)

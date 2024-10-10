@@ -1,17 +1,19 @@
 #include "block.h"
 
-void renderLiquidBlock(BlockRenderInfo &renderInfo)
+void renderLiquidBlock(LiquidRenderInfo &renderInfo)
 {
     std::vector<UVcoords> textureCoords = blockTextureCoords[renderInfo.block];
     UVcoords coords = textureCoords[0];
+
+    float topOffset = renderInfo.liquidOnTop ? 0.0f : 0.1f;
 
     // North face
     if ((renderInfo.cover & 1) == 1)
     {
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(coords.u1, coords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(coords.u2, coords.v1)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.9f, 0.0f), glm::vec2(coords.u2, coords.v2)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.9f, 0.0f), glm::vec2(coords.u1, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f - topOffset, 0.0f), glm::vec2(coords.u2, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f - topOffset, 0.0f), glm::vec2(coords.u1, coords.v2)});
 
         renderInfo.chunkIndices.push_back(renderInfo.indiceOffset + 0);
         renderInfo.chunkIndices.push_back(renderInfo.indiceOffset + 1);
@@ -25,8 +27,8 @@ void renderLiquidBlock(BlockRenderInfo &renderInfo)
     // South face
     if ((renderInfo.cover & 2) == 2)
     {
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.9f, 1.0f), glm::vec2(coords.u1, coords.v2)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.9f, 1.0f), glm::vec2(coords.u2, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f - topOffset, 1.0f), glm::vec2(coords.u1, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f - topOffset, 1.0f), glm::vec2(coords.u2, coords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(coords.u2, coords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(coords.u1, coords.v1)});
 
@@ -44,8 +46,8 @@ void renderLiquidBlock(BlockRenderInfo &renderInfo)
     {
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(coords.u1, coords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(coords.u2, coords.v1)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.9f, 0.0f), glm::vec2(coords.u2, coords.v2)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.9f, 1.0f), glm::vec2(coords.u1, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f - topOffset, 0.0f), glm::vec2(coords.u2, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f - topOffset, 1.0f), glm::vec2(coords.u1, coords.v2)});
 
         renderInfo.chunkIndices.push_back(renderInfo.indiceOffset + 0);
         renderInfo.chunkIndices.push_back(renderInfo.indiceOffset + 1);
@@ -59,8 +61,8 @@ void renderLiquidBlock(BlockRenderInfo &renderInfo)
     // East face
     if ((renderInfo.cover & 8) == 8)
     {
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.9f, 1.0f), glm::vec2(coords.u1, coords.v2)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.9f, 0.0f), glm::vec2(coords.u2, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f - topOffset, 1.0f), glm::vec2(coords.u1, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f - topOffset, 0.0f), glm::vec2(coords.u2, coords.v2)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(coords.u2, coords.v1)});
         renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.0f, 1.0f), glm::vec2(coords.u1, coords.v1)});
 
@@ -93,10 +95,10 @@ void renderLiquidBlock(BlockRenderInfo &renderInfo)
     // Top face
     if ((renderInfo.cover & 32) == 32)
     {
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.9f, 0.0f), glm::vec2(coords.u1, coords.v2)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.9f, 0.0f), glm::vec2(coords.u2, coords.v2)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 0.9f, 1.0f), glm::vec2(coords.u2, coords.v1)});
-        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 0.9f, 1.0f), glm::vec2(coords.u1, coords.v1)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f - topOffset, 0.0f), glm::vec2(coords.u1, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f - topOffset, 0.0f), glm::vec2(coords.u2, coords.v2)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(1.0f, 1.0f - topOffset, 1.0f), glm::vec2(coords.u2, coords.v1)});
+        renderInfo.chunkVertices.push_back({renderInfo.blockPos + glm::vec3(0.0f, 1.0f - topOffset, 1.0f), glm::vec2(coords.u1, coords.v1)});
 
         renderInfo.chunkIndices.push_back(renderInfo.indiceOffset + 0);
         renderInfo.chunkIndices.push_back(renderInfo.indiceOffset + 1);

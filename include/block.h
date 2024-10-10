@@ -30,8 +30,19 @@ typedef struct
     unsigned int &indiceOffset;
 } BlockRenderInfo;
 
+typedef struct
+{
+    BLOCK block;
+    char cover;
+    glm::vec3 blockPos;
+    std::vector<Vertex> &chunkVertices;
+    std::vector<unsigned int> &chunkIndices;
+    unsigned int &indiceOffset;
+    bool liquidOnTop;
+} LiquidRenderInfo;
+
 void renderRegularBlock(BlockRenderInfo &renderInfo);
-void renderLiquidBlock(BlockRenderInfo &renderInfo);
+void renderLiquidBlock(LiquidRenderInfo &renderInfo);
 void renderAirBlock(BlockRenderInfo &renderInfo);
 
 static std::unordered_map<BLOCK, std::vector<UVcoords>> blockTextureCoords = {
@@ -56,8 +67,11 @@ static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRen
     {BLOCK::FOCUS, renderRegularBlock},
     {BLOCK::BEDROCK_BLOCK, renderRegularBlock},
     {BLOCK::SNOW_BLOCK, renderRegularBlock},
-    {BLOCK::WATER_BLOCK, renderLiquidBlock},
     {BLOCK::SAND_BLOCK, renderRegularBlock},
+};
+
+static std::unordered_map<BLOCK, void (*)(LiquidRenderInfo &renderInfo)> liquidRenderFunctions = {
+    {BLOCK::WATER_BLOCK, renderLiquidBlock},
 };
 
 static bool isLiquid(BLOCK block)
