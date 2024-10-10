@@ -108,12 +108,14 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     player->updateLookCoords(xpos, ypos);
 }
 
-void removeBlock(glm::ivec3 &pos, char &face)
+void playerHitBlock(BLOCK block, glm::ivec3 &pos, char &face)
 {
+    if (isLiquid(block))
+        return;
     world->removeBlock(pos);
 }
 
-void focusBlock(glm::ivec3 &pos, char &face)
+void focusBlock(BLOCK block, glm::ivec3 &pos, char &face)
 {
     world->updateFocusBlock(pos, face);
 }
@@ -122,7 +124,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        RayCastInfo info = {*world, player->getPos(), player->getFront(), 5.0f, removeBlock};
+        RayCastInfo info = {*world, player->getPos(), player->getFront(), 5.0f, playerHitBlock};
         shoot_ray(info);
     }
 }

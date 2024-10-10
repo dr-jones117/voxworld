@@ -59,3 +59,8 @@ static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRen
     {BLOCK::WATER_BLOCK, renderLiquidBlock},
     {BLOCK::SAND_BLOCK, renderRegularBlock},
 };
+
+static bool isLiquid(BLOCK block)
+{
+    return block == BLOCK::WATER_BLOCK;
+}

@@ -1,6 +1,6 @@
 #include "physics.h"
 
-void doNothingIfHit(glm::ivec3 &blockPos, char &face)
+void doNothingIfHit(BLOCK block, glm::ivec3 &blockPos, char &face)
 {
 }
 
@@ -59,7 +59,7 @@ bool shoot_ray(RayCastInfo &info)
 
             // Determine the face using the intersection point
             char face = determineHitFace(info.rayDir, intersectionPoint);
-            info.func(blockPos, face);
+            info.func(block, blockPos, face);
             return true; // Exit if a block is hit
         }
 
