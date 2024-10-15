@@ -76,7 +76,6 @@ void generateStructures(std::vector<char> &data, ChunkPos pos)
             {
                 if (rand() / (float)RAND_MAX < treeChance)
                 {
-                    std::cout << "MAKING TREEE!" << std::endl;
                     // Find ground level to place the tree
                     for (int y = CHUNK_HEIGHT - 1; y >= 0; y--)
                     {
