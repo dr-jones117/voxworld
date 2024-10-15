@@ -123,8 +123,9 @@ void World::generateNewChunks(ChunkPos chunkPos)
     }
 
     addChunksToMeshQueue(chunkPos);
-    dataThreadPool.enqueue([this, chunkPos]
-                           { generateChunkDataFromPos(chunkPos, false); });
+    addChunksToDataQueue(chunkPos);
+    dataThreadPool.enqueue([this]
+                           { generateNextData(); });
     threadPool.enqueue([this]
                        { generateNextMesh(); });
 

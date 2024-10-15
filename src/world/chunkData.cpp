@@ -181,6 +181,7 @@ void generateCaves(std::vector<char> &data, ChunkPos pos)
 
 void World::generateChunkData(ChunkPos pos)
 {
+    std::cout << "generating chunk: (" << pos.x << ", " << pos.z << ")" << std::endl;
     std::vector<char> data(BLOCKS_PER_CHUNK);
 
     // Lambda to calculate index in the data vector
