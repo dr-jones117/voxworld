@@ -42,7 +42,7 @@ Camera::Camera(int screenwidth, int screenHeight, World *worldPtr)
     lastTick = 0.0f;
 
     speedMode = false;
-    height = 1.2f;
+    height = 1.4f;
     isJumping = false;
 
     Id = curr_cam_id;

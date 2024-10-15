@@ -12,7 +12,7 @@
 
 extern int render_distance;
 
-const siv::PerlinNoise::seed_type seed = 739212u;
+const siv::PerlinNoise::seed_type seed = 759212u;
 const siv::PerlinNoise perlin{seed};
 
 #include "vec3.h"

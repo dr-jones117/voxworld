@@ -38,6 +38,118 @@ void generateWater(std::vector<char> &data, ChunkPos pos)
     }
 }
 
+void generateStructures(std::vector<char> &data, ChunkPos pos)
+{
+    // Lambda to calculate index in the data vector
+    auto index = [&](int x, int y, int z) -> int
+    {
+        return x + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    };
+
+    // Generate region noise to determine blending weight between plains, hills, and mountains
+    float regionFreq = 0.005;
+    std::string biome;
+
+    // Randomly decide to generate a tree
+    float treeChance = 0.005; // 1% chance to generate a tree per column
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int z = 0; z < CHUNK_SIZE; z++)
+        {
+            double regionNoise = perlin.octave2D_01(regionFreq * (pos.x * CHUNK_SIZE + x), regionFreq * (pos.z * CHUNK_SIZE + z), 4);
+
+            // Determine the biome based on regionNoise
+            if (regionNoise < 0.4)
+            {
+                biome = "Plains";
+            }
+            else if (regionNoise >= 0.4 && regionNoise < 0.7)
+            {
+                biome = "Hills";
+            }
+            else
+            {
+                biome = "Mountains";
+            }
+
+            if (biome == "Hills")
+            {
+                if (rand() / (float)RAND_MAX < treeChance)
+                {
+                    std::cout << "MAKING TREEE!" << std::endl;
+                    // Find ground level to place the tree
+                    for (int y = CHUNK_HEIGHT - 1; y >= 0; y--)
+                    {
+                        if (data[index(x, y, z)] == BLOCK::GRASS_BLOCK)
+                        {
+                            // Generate a simple tree (trunk + leaves)
+                            int trunkHeight = 7; // Set trunk height
+
+                            // Generate leaves on top of the trunk
+                            int leavesStartY = y + trunkHeight - 2; // Leaves start a bit lower to allow for wood extension
+                            int leavesTopHeight = 3;                // Height of the leaf "top" layer
+                            int leavesRadius = 2;                   // Set the radius of the cubic leaf "canopy"
+                            float leafChance = 0.65f;               // 70% chance to place a leaf block
+
+                            // Generate a defined top layer of leaves
+                            for (int lx = -1; lx <= 1; lx++)
+                            {
+                                for (int lz = -1; lz <= 1; lz++)
+                                {
+                                    int leafX = x + lx;
+                                    int leafZ = z + lz;
+                                    int leafY = leavesStartY + leavesTopHeight;
+
+                                    // Ensure indices are within bounds
+                                    if (leafY < CHUNK_HEIGHT && leafX >= 0 && leafX < CHUNK_SIZE && leafZ >= 0 && leafZ < CHUNK_SIZE)
+                                    {
+                                        data[index(leafX, leafY, leafZ)] = BLOCK::OAK_LEAVES;
+                                    }
+                                }
+                            }
+
+                            // Generate the cubic leaf canopy
+                            for (int lx = -leavesRadius; lx <= leavesRadius; lx++)
+                            {
+                                for (int lz = -leavesRadius; lz <= leavesRadius; lz++)
+                                {
+                                    for (int ly = 0; ly <= 2; ly++) // Add 3 layers of leaves
+                                    {
+                                        // Add randomness to the leaf placement
+                                        if ((lz < 2 && lx < 2) || (rand() / (float)RAND_MAX < leafChance)) // Random chance for natural look
+                                        {
+                                            int leafX = x + lx;
+                                            int leafZ = z + lz;
+                                            int leafY = leavesStartY + ly;
+
+                                            // Ensure indices are within bounds
+                                            if (leafY < CHUNK_HEIGHT && leafX >= 0 && leafX < CHUNK_SIZE && leafZ >= 0 && leafZ < CHUNK_SIZE)
+                                            {
+                                                data[index(leafX, leafY, leafZ)] = BLOCK::OAK_LEAVES;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Generate trunk (WOOD_BLOCK)
+                            for (int t = 0; t < trunkHeight; t++)
+                            {
+                                if (y + t < CHUNK_HEIGHT) // Ensure trunk stays within bounds
+                                {
+                                    data[index(x, y + t, z)] = BLOCK::OAK_WOOD;
+                                }
+                            }
+
+                            break; // Once a tree is placed, no need to continue in this column
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void generateCaves(std::vector<char> &data, ChunkPos pos)
 {
     double freq = 0.05;    // Reduced frequency for larger caves
@@ -124,12 +236,12 @@ void World::generateChunkData(ChunkPos pos)
 
             // Define frequencies and heights for different region types
             double plainsFreq = 0.005, hillsFreq = 0.007, mountainsFreq = 0.03;
-            double plainsHeightScale = CHUNK_HEIGHT / 4, hillsHeightScale = CHUNK_HEIGHT / 2, mountainsHeightScale = CHUNK_HEIGHT - 10;
+            double plainsHeightScale = CHUNK_HEIGHT / 4, hillsHeightScale = CHUNK_HEIGHT / 2, mountainsHeightScale = CHUNK_HEIGHT - 60;
 
             // Determine blend weights based on regionNoise
             double plainsWeight = (regionNoise < 0.4) ? (1.0 - regionNoise / 0.4) : 0.0;                      // Strong in plains zone
             double hillsWeight = (regionNoise >= 0.4 && regionNoise < 0.7) ? (regionNoise - 0.4) / 0.3 : 0.0; // Middle zone (hills)
-            double mountainsWeight = (regionNoise >= 0.7) ? (regionNoise - 0.7) / 0.3 : 0.0;                  // Strong in mountain zone
+            double mountainsWeight = (regionNoise >= 0.7) ? (regionNoise - 0.7) / 0.5 : 0.0;                  // Strong in mountain zone
 
             // Blend frequency and height scales based on weights
             double blendedFreq = lerp(lerp(plainsFreq, hillsFreq, plainsWeight), mountainsFreq, mountainsWeight);
@@ -167,6 +279,7 @@ void World::generateChunkData(ChunkPos pos)
 
     generateWater(data, pos);
     generateCaves(data, pos);
+    generateStructures(data, pos);
 
     std::lock_guard<std::mutex> lock(data_mtx);
     chunkDataMap[pos] = data;

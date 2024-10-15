@@ -68,6 +68,8 @@ static std::unordered_map<BLOCK, void (*)(BlockRenderInfo &renderInfo)> blockRen
     {BLOCK::BEDROCK_BLOCK, renderRegularBlock},
     {BLOCK::SNOW_BLOCK, renderRegularBlock},
     {BLOCK::SAND_BLOCK, renderRegularBlock},
+    {BLOCK::OAK_WOOD, renderRegularBlock},
+    {BLOCK::OAK_LEAVES, renderRegularBlock},
 };
 
 static std::unordered_map<BLOCK, void (*)(LiquidRenderInfo &renderInfo)> liquidRenderFunctions = {
