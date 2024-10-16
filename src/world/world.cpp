@@ -131,51 +131,39 @@ void World::generateNewChunks(ChunkPos chunkPos)
     // Timing variables
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    if (activeTasks < maxTasks) // Only enqueue if below the limit
+    dataThreadPool.enqueue([this, chunkPos]
+                           { generateChunkDataFromPos(chunkPos, false); });
+
     {
-        activeTasks++; // Increment task counter
-        threadPool.enqueue([this, chunkPos]
+        std::unique_lock<std::mutex> lock(mesh_queue_mtx);
+        if (chunksToMeshQueue.empty())
+        {
+            lock.unlock();
+            activeTasks++; // Increment task counter
+            threadPool.enqueue([this, chunkPos]
+                               { addChunksToMeshQueue(chunkPos); });
+        }
+    }
+
+    {
+        std::unique_lock<std::mutex> lock(mesh_queue_mtx);
+        if (!chunksToMeshQueue.empty())
+        {
+            lock.unlock();
+            threadPool.enqueue([this]
+                               { generateNextMesh(); });
+        }
+    }
+
+    dataThreadPool.enqueue([this, chunkPos]
                            {
-                               addChunksToMeshQueue(chunkPos);
-                               activeTasks--; // Decrement after completion
-                           });
-    }
-
-    if (activeTasks < maxTasks) // Check limit again
-    {
-        activeTasks++;
-        threadPool.enqueue([this]
-                           {
-                               generateNextMesh();
-                               activeTasks--; });
-    }
-
-    if (activeTasks < maxTasks)
-    {
-        activeTasks++;
-        dataThreadPool.enqueue([this, chunkPos]
-                               {
-                                   generateChunkDataFromPos(chunkPos, false);
-                                   activeTasks--; });
-    }
-
-    if (activeTasks < maxTasks)
-    {
-        activeTasks++;
-        dataThreadPool.enqueue([this, chunkPos]
-                               {
                                    removeUnneededChunkData(chunkPos);
                                    activeTasks--; });
-    }
 
-    if (activeTasks < maxTasks)
-    {
-        activeTasks++;
-        threadPool.enqueue([this, chunkPos]
-                           {
+    threadPool.enqueue([this, chunkPos]
+                       {
                                removeUnneededChunkMeshes(chunkPos);
                                activeTasks--; });
-    }
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> elapsed = currentTime - startTime;

@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 20;
+int render_distance = 10;
 
 void World::bindChunkOpaque(ChunkMesh &chunkMesh)
 {
@@ -206,7 +206,7 @@ void updateOpaqueRenderInfo(int x, int y, int z, BlockRenderInfo &renderInfo, Ch
 
 void World::generateNextMesh()
 {
-
+    // std::cout << "generating next mesh!" << rand() << std::endl;
     std::unique_lock<std::mutex> queue_mtx(mesh_queue_mtx);
 
     if (chunksToMeshQueue.empty())
@@ -417,6 +417,7 @@ bool World::posIsInQueue(std::deque<ChunkPos> &queue, ChunkPos &pos)
 
 void World::addChunksToMeshQueue(ChunkPos pos)
 {
+    std::cout << "adding chunks to mesh queue!" << rand() << std::endl;
     std::unique_lock<std::mutex> queue_mtx(mesh_queue_mtx);
     int x = pos.x;
     int z = pos.z;
