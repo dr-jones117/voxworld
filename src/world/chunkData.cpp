@@ -37,6 +37,10 @@ void generateWater(std::vector<char> &data, ChunkPos pos)
         }
     }
 }
+inline int positiveMod(int value, int mod)
+{
+    return (value % mod + mod) % mod;
+}
 
 void World::addStructureBlockToWorld(ChunkPos &pos, BlockWithPos &blockWithPos, std::vector<char> &data)
 {
@@ -60,22 +64,14 @@ void World::addStructureBlockToWorld(ChunkPos &pos, BlockWithPos &blockWithPos, 
         newChunkPos.x = pos.x + (blockWithPos.x < 0 ? (blockWithPos.x - CHUNK_SIZE + 1) / CHUNK_SIZE : blockWithPos.x / CHUNK_SIZE);
         newChunkPos.z = pos.z + (blockWithPos.z < 0 ? (blockWithPos.z - CHUNK_SIZE + 1) / CHUNK_SIZE : blockWithPos.z / CHUNK_SIZE);
 
-        unsigned int localX = blockWithPos.x % CHUNK_SIZE;
-        unsigned int localZ = blockWithPos.z % CHUNK_SIZE;
-        if (blockWithPos.x < 0)
-        {
-            localX += CHUNK_SIZE;
-        }
-        if (blockWithPos.z < 0)
-        {
-            localZ += CHUNK_SIZE;
-        }
+        unsigned int localX = positiveMod(blockWithPos.x, CHUNK_SIZE);
+        unsigned int localZ = positiveMod(blockWithPos.z, CHUNK_SIZE);
 
         BlockWithPos adjustedBlock = {localX, blockWithPos.y, localZ, blockWithPos.block};
 
-        if (chunkDataMap.find(pos) != chunkDataMap.end())
+        if (chunkDataMap.find(newChunkPos) != chunkDataMap.end())
         {
-            auto &data = chunkDataMap[pos];
+            auto &data = chunkDataMap[newChunkPos];
             data[index(adjustedBlock.x, adjustedBlock.y, adjustedBlock.z)] = adjustedBlock.block;
         }
         else
@@ -92,20 +88,6 @@ void World::generateStructures(std::vector<char> &data, ChunkPos pos)
     {
         return x + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
     };
-
-    // Pop from the queue to get the block data for the current chunk
-    auto &queue = structQueue[pos];
-    while (!queue.empty())
-    {
-        BlockWithPos block = queue.front(); // Get the block at the front of the queue
-        queue.pop_front();                  // Remove it from the queue
-
-        // Calculate index and place the block in the data vector
-        if (block.y < CHUNK_HEIGHT) // Ensure the block is within bounds
-        {
-            data[index(block.x, block.y, block.z)] = block.block; // Update the data vector with the block
-        }
-    }
 
     // Generate region noise to determine blending weight between plains, hills, and mountains
     float regionFreq = 0.005;
@@ -143,16 +125,13 @@ void World::generateStructures(std::vector<char> &data, ChunkPos pos)
                     {
                         if (data[index(x, y, z)] == BLOCK::GRASS_BLOCK)
                         {
-                            // Generate a simple tree (trunk + leaves)
-                            int trunkHeight = 7; // Set trunk height
+                            int trunkHeight = 7;
+                            int leavesStartY = y + trunkHeight - 2;
+                            int leavesTopHeight = 3;
+                            int leavesRadius = 2;
+                            float leafChance = 0.65f;
 
-                            // Generate leaves on top of the trunk
-                            int leavesStartY = y + trunkHeight - 2; // Leaves start a bit lower to allow for wood extension
-                            int leavesTopHeight = 3;                // Height of the leaf "top" layer
-                            int leavesRadius = 2;                   // Set the radius of the cubic leaf "canopy"
-                            float leafChance = 0.65f;               // 70% chance to place a leaf block
-
-                            // Generate a defined top layer of leaves
+                            // Generate top layer of leaves
                             for (int lx = -1; lx <= 1; lx++)
                             {
                                 for (int lz = -1; lz <= 1; lz++)
@@ -161,52 +140,57 @@ void World::generateStructures(std::vector<char> &data, ChunkPos pos)
                                     int leafZ = z + lz;
                                     int leafY = leavesStartY + leavesTopHeight;
 
-                                    // Ensure indices are within bounds
-                                    if (leafY < CHUNK_HEIGHT && leafX >= 0 && leafX < CHUNK_SIZE && leafZ >= 0 && leafZ < CHUNK_SIZE)
-                                    {
-                                        data[index(leafX, leafY, leafZ)] = BLOCK::OAK_LEAVES;
-                                    }
+                                    BlockWithPos block = {leafX, leafY, leafZ, BLOCK::OAK_LEAVES};
+                                    addStructureBlockToWorld(pos, block, data);
                                 }
                             }
 
-                            // Generate the cubic leaf canopy
+                            // Generate cubic leaf canopy
                             for (int lx = -leavesRadius; lx <= leavesRadius; lx++)
                             {
                                 for (int lz = -leavesRadius; lz <= leavesRadius; lz++)
                                 {
-                                    for (int ly = 0; ly <= 2; ly++) // Add 3 layers of leaves
+                                    for (int ly = 0; ly <= 2; ly++)
                                     {
-                                        // Add randomness to the leaf placement
-                                        if ((lz < 2 && lx < 2) || (rand() / (float)RAND_MAX < leafChance)) // Random chance for natural look
+                                        if ((lz < 2 && lx < 2) || (rand() / (float)RAND_MAX < leafChance))
                                         {
                                             int leafX = x + lx;
                                             int leafZ = z + lz;
                                             int leafY = leavesStartY + ly;
 
-                                            // Ensure indices are within bounds
-                                            if (leafY < CHUNK_HEIGHT && leafX >= 0 && leafX < CHUNK_SIZE && leafZ >= 0 && leafZ < CHUNK_SIZE)
-                                            {
-                                                data[index(leafX, leafY, leafZ)] = BLOCK::OAK_LEAVES;
-                                            }
+                                            BlockWithPos block = {leafX, leafY, leafZ, BLOCK::OAK_LEAVES};
+                                            addStructureBlockToWorld(pos, block, data);
                                         }
                                     }
                                 }
                             }
 
-                            // Generate trunk (WOOD_BLOCK)
                             for (int t = 0; t < trunkHeight; t++)
                             {
-                                if (y + t < CHUNK_HEIGHT) // Ensure trunk stays within bounds
-                                {
-                                    data[index(x, y + t, z)] = BLOCK::OAK_WOOD;
-                                }
+                                int trunkY = y + t;
+                                BlockWithPos block = {x, trunkY, z, BLOCK::OAK_WOOD};
+                                addStructureBlockToWorld(pos, block, data);
                             }
 
-                            break; // Once a tree is placed, no need to continue in this column
+                            break;
                         }
                     }
                 }
             }
+        }
+    }
+
+    // Pop from the queue to get the block data for the current chunk
+    auto &queue = structQueue[pos];
+    while (!queue.empty())
+    {
+        BlockWithPos block = queue.front(); // Get the block at the front of the queue
+        queue.pop_front();                  // Remove it from the queue
+
+        // Calculate index and place the block in the data vector
+        if (block.y < CHUNK_HEIGHT) // Ensure the block is within bounds
+        {
+            data[index(block.x, block.y, block.z)] = block.block; // Update the data vector with the block
         }
     }
 }

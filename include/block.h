@@ -22,7 +22,7 @@ enum BLOCK
 
 typedef struct
 {
-    unsigned int x, y, z;
+    int x, y, z;
     BLOCK block;
 } BlockWithPos;
 
