@@ -125,7 +125,7 @@ void World::generateStructures(std::vector<char> &data, ChunkPos pos)
                     {
                         if (data[index(x, y, z)] == BLOCK::GRASS_BLOCK)
                         {
-                            int trunkHeight = 7;
+                            int trunkHeight = 8;
                             int leavesStartY = y + trunkHeight - 2;
                             int leavesTopHeight = 3;
                             int leavesRadius = 2;

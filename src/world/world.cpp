@@ -124,7 +124,7 @@ void World::removeBlock(glm::ivec3 blockPos)
 }
 
 std::atomic<int> activeTasks{0};
-const int maxTasks = 1000; // Max number of tasks to allow
+const int maxTasks = 3000; // Max number of tasks to allow
 
 void World::generateNewChunks(ChunkPos chunkPos)
 {
