@@ -12,7 +12,7 @@
 class World
 {
 public:
-    World() : threadPool(3), dataThreadPool(2)
+    World() : threadPool(1), dataThreadPool(1)
     {
         focusMesh.setDepthTest(false);
         intialDataGenerated = false;

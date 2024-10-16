@@ -138,6 +138,7 @@ void World::generateNewChunks(ChunkPos chunkPos)
 
     dataThreadPool.enqueue([this, chunkPos]
                            { removeUnneededChunkData(chunkPos); });
+
     threadPool.enqueue([this, chunkPos]
                        { removeUnneededChunkMeshes(chunkPos); });
 
@@ -147,7 +148,7 @@ void World::generateNewChunks(ChunkPos chunkPos)
     {
         int test = 10;
     }
-    std::cout << "duration: " << elapsed.count() << std::endl;
+    // std::cout << "duration: " << elapsed.count() << std::endl;
 }
 
 void World::render()

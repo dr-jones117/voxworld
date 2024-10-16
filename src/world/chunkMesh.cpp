@@ -217,6 +217,15 @@ void World::generateNextMesh()
     if (!chunkDataExists({pos.x, pos.z}) || !chunkDataExists({pos.x, pos.z - 1}) || !chunkDataExists({pos.x, pos.z + 1}) || !chunkDataExists({pos.x - 1, pos.z}) || !chunkDataExists({pos.x + 1, pos.z}))
         return;
 
+    ChunkData chunkData = {
+        chunkDataMap[{pos.x, pos.z}],
+        chunkDataMap[{pos.x, pos.z - 1}],
+        chunkDataMap[{pos.x, pos.z + 1}],
+        chunkDataMap[{pos.x - 1, pos.z}],
+        chunkDataMap[{pos.x + 1, pos.z}],
+    };
+    data_lock.unlock();
+
     chunksToMeshQueue.pop_front();
     queue_mtx.unlock();
 
@@ -227,16 +236,6 @@ void World::generateNextMesh()
 
     unsigned int indiceOffset = 0;
     unsigned int transparentIndiceOffset = 0;
-
-    ChunkData chunkData = {
-        chunkDataMap[{pos.x, pos.z}],
-        chunkDataMap[{pos.x, pos.z - 1}],
-        chunkDataMap[{pos.x, pos.z + 1}],
-        chunkDataMap[{pos.x - 1, pos.z}],
-        chunkDataMap[{pos.x + 1, pos.z}],
-    };
-
-    data_lock.unlock();
 
     assert(chunkData.chunkData.size() > 0 && chunkData.northChunkData.size() > 0 && chunkData.southChunkData.size() > 0 && chunkData.westChunkData.size() > 0 && chunkData.eastChunkData.size() > 0);
 

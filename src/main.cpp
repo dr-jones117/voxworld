@@ -29,7 +29,7 @@
 #include <chrono>
 #include <rendering.h>
 
-#define SHOW_FPS false
+#define SHOW_FPS true
 
 int screenWidth = 1280, screenHeight = 720;
 World *world = new World();

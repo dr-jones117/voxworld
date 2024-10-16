@@ -280,9 +280,9 @@ void World::generateChunkData(ChunkPos pos)
 
     generateWater(data, pos);
     generateCaves(data, pos);
-    generateStructures(data, pos);
 
-    // std::lock_guard<std::mutex> lock(data_mtx);
+    std::lock_guard<std::mutex> lock(data_mtx);
+    generateStructures(data, pos);
     chunkDataMap[pos] = data;
 }
 
@@ -323,7 +323,7 @@ void World::removeUnneededChunkData(ChunkPos pos)
 
 void World::generateChunkDataFromPos(ChunkPos pos, bool initial = false)
 {
-    std::lock_guard<std::mutex> lock(data_mtx);
+
     int x = pos.x;
     int z = pos.z;
 
@@ -336,7 +336,7 @@ void World::generateChunkDataFromPos(ChunkPos pos, bool initial = false)
     int range = render_distance + 1;
     if (initial)
     {
-        range = 1;
+        range = 2;
     }
     for (int i = 1; i <= range; i++)
     {
