@@ -393,7 +393,7 @@ void World::removeUnneededChunkMeshes(ChunkPos pos)
     {
         ChunkPos chunkPos = pair.first;
         glm::vec3 vector = glm::vec3(chunkPos.x - pos.x, 0, chunkPos.z - pos.z);
-        if ((int)glm::length(vector) > (render_distance + 1))
+        if ((int)glm::length(vector) > (render_distance + 4))
         {
             chunkPosToRemove.push_back(chunkPos);
         }
