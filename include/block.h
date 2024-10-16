@@ -22,6 +22,12 @@ enum BLOCK
 
 typedef struct
 {
+    unsigned int x, y, z;
+    BLOCK block;
+} BlockWithPos;
+
+typedef struct
+{
     BLOCK block;
     char cover;
     glm::vec3 blockPos;

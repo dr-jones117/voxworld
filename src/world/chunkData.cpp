@@ -38,6 +38,53 @@ void generateWater(std::vector<char> &data, ChunkPos pos)
     }
 }
 
+void World::addStructureBlockToWorld(ChunkPos &pos, BlockWithPos &blockWithPos, std::vector<char> &data)
+{
+    auto index = [&](int x, int y, int z) -> int
+    {
+        return x + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
+    };
+
+    // Check if block is within the current chunk's boundaries
+    if (blockWithPos.x >= 0 && blockWithPos.x < CHUNK_SIZE &&
+        blockWithPos.y >= 0 && blockWithPos.y < CHUNK_HEIGHT &&
+        blockWithPos.z >= 0 && blockWithPos.z < CHUNK_SIZE)
+    {
+        // Block is inside the current chunk, update the data array
+        data[index(blockWithPos.x, blockWithPos.y, blockWithPos.z)] = blockWithPos.block;
+    }
+    else
+    {
+        // Block is outside the chunk, calculate the chunk position and add to structQueue
+        ChunkPos newChunkPos;
+        newChunkPos.x = pos.x + (blockWithPos.x < 0 ? (blockWithPos.x - CHUNK_SIZE + 1) / CHUNK_SIZE : blockWithPos.x / CHUNK_SIZE);
+        newChunkPos.z = pos.z + (blockWithPos.z < 0 ? (blockWithPos.z - CHUNK_SIZE + 1) / CHUNK_SIZE : blockWithPos.z / CHUNK_SIZE);
+
+        unsigned int localX = blockWithPos.x % CHUNK_SIZE;
+        unsigned int localZ = blockWithPos.z % CHUNK_SIZE;
+        if (blockWithPos.x < 0)
+        {
+            localX += CHUNK_SIZE;
+        }
+        if (blockWithPos.z < 0)
+        {
+            localZ += CHUNK_SIZE;
+        }
+
+        BlockWithPos adjustedBlock = {localX, blockWithPos.y, localZ, blockWithPos.block};
+
+        if (chunkDataMap.find(pos) != chunkDataMap.end())
+        {
+            auto &data = chunkDataMap[pos];
+            data[index(adjustedBlock.x, adjustedBlock.y, adjustedBlock.z)] = adjustedBlock.block;
+        }
+        else
+        {
+            structQueue[newChunkPos].push_back(adjustedBlock);
+        }
+    }
+}
+
 void generateStructures(std::vector<char> &data, ChunkPos pos)
 {
     // Lambda to calculate index in the data vector

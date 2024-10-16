@@ -43,6 +43,8 @@ private:
     std::mutex data_queue_mtx;
     std::deque<ChunkPos> chunkDataQueue;
 
+    StructQueue structQueue;
+
     Mesh focusMesh;
 
     bool posIsInQueue(std::deque<ChunkPos> &queue, ChunkPos &pos);
@@ -74,4 +76,7 @@ private:
     void removeChunkFromMap(ChunkPos pos);
     void removeUnneededChunkMeshes(ChunkPos pos);
     ChunkMesh *getChunkFromMap(ChunkPos pos);
+
+    // structures
+    void addStructureBlockToWorld(ChunkPos &pos, BlockWithPos &blockWithPos, std::vector<char> &data)
 };
