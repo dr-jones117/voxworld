@@ -29,7 +29,7 @@
 #include <chrono>
 #include <rendering.h>
 
-#define SHOW_FPS true
+#define SHOW_FPS false
 
 int screenWidth = 1280, screenHeight = 720;
 World *world = new World();
@@ -186,6 +186,9 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
+        if (!world->intialDataGenerated)
+            continue;
+
         frameCount++;
 
         ChunkPos playerChunkPos = player->getChunkPos();

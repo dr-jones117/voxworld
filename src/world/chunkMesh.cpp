@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 20;
+int render_distance = 12;
 
 void World::bindChunkOpaque(ChunkMesh &chunkMesh)
 {
@@ -213,11 +213,11 @@ void World::generateNextMesh()
         return;
     ChunkPos pos = chunksToMeshQueue.front();
 
+    std::unique_lock<std::mutex> data_lock(data_mtx);
     if (!chunkDataExists({pos.x, pos.z}) || !chunkDataExists({pos.x, pos.z - 1}) || !chunkDataExists({pos.x, pos.z + 1}) || !chunkDataExists({pos.x - 1, pos.z}) || !chunkDataExists({pos.x + 1, pos.z}))
         return;
 
     chunksToMeshQueue.pop_front();
-
     queue_mtx.unlock();
 
     ChunkMesh chunkMesh;
@@ -229,12 +229,14 @@ void World::generateNextMesh()
     unsigned int transparentIndiceOffset = 0;
 
     ChunkData chunkData = {
-        getChunkDataIfExists({pos.x, pos.z}),
-        getChunkDataIfExists({pos.x, pos.z - 1}),
-        getChunkDataIfExists({pos.x, pos.z + 1}),
-        getChunkDataIfExists({pos.x - 1, pos.z}),
-        getChunkDataIfExists({pos.x + 1, pos.z}),
+        chunkDataMap[{pos.x, pos.z}],
+        chunkDataMap[{pos.x, pos.z - 1}],
+        chunkDataMap[{pos.x, pos.z + 1}],
+        chunkDataMap[{pos.x - 1, pos.z}],
+        chunkDataMap[{pos.x + 1, pos.z}],
     };
+
+    data_lock.unlock();
 
     assert(chunkData.chunkData.size() > 0 && chunkData.northChunkData.size() > 0 && chunkData.southChunkData.size() > 0 && chunkData.westChunkData.size() > 0 && chunkData.eastChunkData.size() > 0);
 

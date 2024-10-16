@@ -12,7 +12,7 @@
 class World
 {
 public:
-    World() : threadPool(1), dataThreadPool(5)
+    World() : threadPool(3), dataThreadPool(2)
     {
         focusMesh.setDepthTest(false);
         intialDataGenerated = false;
@@ -25,10 +25,9 @@ public:
     BLOCK getBlockData(glm::ivec3 blockPos);
     void removeBlock(glm::ivec3 blockPos);
     void updateFocusBlock(glm::ivec3 &pos, char &face);
-
-private:
     bool intialDataGenerated;
 
+private:
     ThreadPool threadPool;
     ThreadPool dataThreadPool;
 

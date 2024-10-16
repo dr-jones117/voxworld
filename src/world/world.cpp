@@ -13,6 +13,9 @@
 void World::init()
 {
     focusMesh.init();
+    // TODO: fix this call, 0, 0? what if theyre not at spawn. dumbass...
+    generateChunkDataFromPos({0, 0}, true);
+    intialDataGenerated = true;
 }
 
 BLOCK World::getBlockData(glm::ivec3 blockPos)
@@ -44,6 +47,11 @@ BLOCK World::getBlockData(glm::ivec3 blockPos)
     ChunkPos chunkPos = {chunk_x,
                          chunk_z};
 
+    if (!chunkDataExists(chunkPos))
+    {
+        // TODO: this is bullshit, fix this later
+        return BLOCK::AIR_BLOCK;
+    }
     std::vector<char> data = getChunkDataIfExists(chunkPos);
     if (data.size() > 0)
     {
@@ -116,20 +124,30 @@ void World::removeBlock(glm::ivec3 blockPos)
 
 void World::generateNewChunks(ChunkPos chunkPos)
 {
-    if (!intialDataGenerated)
-    {
-        generateChunkDataFromPos(chunkPos, true);
-        intialDataGenerated = true;
-    }
+    // Timing variables
+    auto startTime = std::chrono::high_resolution_clock::now();
 
-    addChunksToMeshQueue(chunkPos);
-    dataThreadPool.enqueue([this, chunkPos]
-                           { generateChunkDataFromPos(chunkPos, false); });
+    threadPool.enqueue([this, chunkPos]
+                       { addChunksToMeshQueue(chunkPos); });
+
     threadPool.enqueue([this]
                        { generateNextMesh(); });
 
-    // removeUnneededChunkData(chunkPos);
-    removeUnneededChunkMeshes(chunkPos);
+    dataThreadPool.enqueue([this, chunkPos]
+                           { generateChunkDataFromPos(chunkPos, false); });
+
+    dataThreadPool.enqueue([this, chunkPos]
+                           { removeUnneededChunkData(chunkPos); });
+    threadPool.enqueue([this, chunkPos]
+                       { removeUnneededChunkMeshes(chunkPos); });
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> elapsed = currentTime - startTime;
+    if (elapsed.count() > 0.5)
+    {
+        int test = 10;
+    }
+    std::cout << "duration: " << elapsed.count() << std::endl;
 }
 
 void World::render()

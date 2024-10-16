@@ -12,7 +12,7 @@
 
 bool World::chunkDataExists(ChunkPos pos)
 {
-    std::lock_guard<std::mutex> lock(data_mtx);
+
     if (chunkDataMap.find(pos) == chunkDataMap.end())
         return false;
     return true;
@@ -76,8 +76,8 @@ void generateStructures(std::vector<char> &data, ChunkPos pos)
             {
                 if (rand() / (float)RAND_MAX < treeChance)
                 {
-                    std::cout << "MAKING TREEE!" << std::endl;
-                    // Find ground level to place the tree
+                    // std::cout << "MAKING TREEE!" << std::endl;
+                    //  Find ground level to place the tree
                     for (int y = CHUNK_HEIGHT - 1; y >= 0; y--)
                     {
                         if (data[index(x, y, z)] == BLOCK::GRASS_BLOCK)
@@ -181,6 +181,7 @@ void generateCaves(std::vector<char> &data, ChunkPos pos)
 
 void World::generateChunkData(ChunkPos pos)
 {
+    // std::cout << "generating chunk: (" << pos.x << ", " << pos.z << ")" << std::endl;
     std::vector<char> data(BLOCKS_PER_CHUNK);
 
     // Lambda to calculate index in the data vector
@@ -281,13 +282,12 @@ void World::generateChunkData(ChunkPos pos)
     generateCaves(data, pos);
     generateStructures(data, pos);
 
-    std::lock_guard<std::mutex> lock(data_mtx);
+    // std::lock_guard<std::mutex> lock(data_mtx);
     chunkDataMap[pos] = data;
 }
 
 std::vector<char> &World::getChunkDataIfExists(ChunkPos pos)
 {
-    std::lock_guard<std::mutex> lock(data_mtx);
     if (chunkDataMap.find(pos) != chunkDataMap.end())
     {
         return chunkDataMap[pos];
@@ -323,6 +323,7 @@ void World::removeUnneededChunkData(ChunkPos pos)
 
 void World::generateChunkDataFromPos(ChunkPos pos, bool initial = false)
 {
+    std::lock_guard<std::mutex> lock(data_mtx);
     int x = pos.x;
     int z = pos.z;
 
