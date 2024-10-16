@@ -4,6 +4,7 @@
 #include <deque>
 
 #include "world/chunkPos.h"
+#include "block.h"
 
 #define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 256

@@ -85,13 +85,27 @@ void World::addStructureBlockToWorld(ChunkPos &pos, BlockWithPos &blockWithPos, 
     }
 }
 
-void generateStructures(std::vector<char> &data, ChunkPos pos)
+void World::generateStructures(std::vector<char> &data, ChunkPos pos)
 {
     // Lambda to calculate index in the data vector
     auto index = [&](int x, int y, int z) -> int
     {
         return x + (y * CHUNK_SIZE) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
     };
+
+    // Pop from the queue to get the block data for the current chunk
+    auto &queue = structQueue[pos];
+    while (!queue.empty())
+    {
+        BlockWithPos block = queue.front(); // Get the block at the front of the queue
+        queue.pop_front();                  // Remove it from the queue
+
+        // Calculate index and place the block in the data vector
+        if (block.y < CHUNK_HEIGHT) // Ensure the block is within bounds
+        {
+            data[index(block.x, block.y, block.z)] = block.block; // Update the data vector with the block
+        }
+    }
 
     // Generate region noise to determine blending weight between plains, hills, and mountains
     float regionFreq = 0.005;
@@ -328,6 +342,7 @@ void World::generateChunkData(ChunkPos pos)
     generateWater(data, pos);
     generateCaves(data, pos);
 
+    std::lock_guard<std::mutex> struct_lock(struct_mtx);
     std::lock_guard<std::mutex> lock(data_mtx);
     generateStructures(data, pos);
     chunkDataMap[pos] = data;
