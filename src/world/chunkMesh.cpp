@@ -12,7 +12,7 @@
 #include "PerlinNoise.hpp"
 #include "block.h"
 
-int render_distance = 10;
+int render_distance = 32;
 
 void World::bindChunkOpaque(ChunkMesh &chunkMesh)
 {
@@ -206,16 +206,24 @@ void updateOpaqueRenderInfo(int x, int y, int z, BlockRenderInfo &renderInfo, Ch
 
 void World::generateNextMesh()
 {
-    // std::cout << "generating next mesh!" << rand() << std::endl;
     std::unique_lock<std::mutex> queue_mtx(mesh_queue_mtx);
 
     if (chunksToMeshQueue.empty())
         return;
     ChunkPos pos = chunksToMeshQueue.front();
+    if (chunkGenerationTries > 10)
+    {
+        chunksToMeshQueue.pop_front();
+        chunkGenerationTries = 0;
+        return;
+    }
 
     std::unique_lock<std::mutex> data_lock(data_mtx);
     if (!chunkDataExists({pos.x, pos.z}) || !chunkDataExists({pos.x, pos.z - 1}) || !chunkDataExists({pos.x, pos.z + 1}) || !chunkDataExists({pos.x - 1, pos.z}) || !chunkDataExists({pos.x + 1, pos.z}))
+    {
+        chunkGenerationTries++;
         return;
+    }
 
     ChunkData chunkData = {
         chunkDataMap[{pos.x, pos.z}],
@@ -417,7 +425,6 @@ bool World::posIsInQueue(std::deque<ChunkPos> &queue, ChunkPos &pos)
 
 void World::addChunksToMeshQueue(ChunkPos pos)
 {
-    std::cout << "adding chunks to mesh queue!" << rand() << std::endl;
     std::unique_lock<std::mutex> queue_mtx(mesh_queue_mtx);
     int x = pos.x;
     int z = pos.z;
@@ -430,6 +437,10 @@ void World::addChunksToMeshQueue(ChunkPos pos)
 
     for (int i = 1; i < render_distance; i++)
     {
+        if (i == render_distance - 1)
+        {
+            int test = 10;
+        }
         // start top left
         for (int j = 0; j < i * 2; j++)
         {

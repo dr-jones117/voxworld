@@ -123,55 +123,105 @@ void World::removeBlock(glm::ivec3 blockPos)
     }
 }
 
-std::atomic<int> activeTasks{0};
-const int maxTasks = 3000; // Max number of tasks to allow
-
-void World::generateNewChunks(ChunkPos chunkPos)
+void World::startWorldGeneration()
 {
-    // Timing variables
-    auto startTime = std::chrono::high_resolution_clock::now();
-
-    dataThreadPool.enqueue([this, chunkPos]
-                           { generateChunkDataFromPos(chunkPos, false); });
-
+    // Locking current position initially to avoid races
     {
-        std::unique_lock<std::mutex> lock(mesh_queue_mtx);
-        if (chunksToMeshQueue.empty())
-        {
-            lock.unlock();
-            activeTasks++; // Increment task counter
-            threadPool.enqueue([this, chunkPos]
-                               { addChunksToMeshQueue(chunkPos); });
-        }
-    }
+        // Enqueue data generation task
+        dataThreadPool.enqueue([this]
+                               {
+            ChunkPos newPos;
+            while (true)
+            {
+                // Lock to safely read world position
+                {
+                    std::unique_lock<std::mutex> lock(pos_mtx);
+                    newPos = worldCurrPos;
+                }
 
-    {
-        std::unique_lock<std::mutex> lock(mesh_queue_mtx);
-        if (!chunksToMeshQueue.empty())
-        {
-            lock.unlock();
-            threadPool.enqueue([this]
-                               { generateNextMesh(); });
-        }
-    }
+                //if (newPos == currentPos) continue;
+                generateChunkDataFromPos(newPos, false);
 
-    dataThreadPool.enqueue([this, chunkPos]
+                // Add a break condition or sleep for efficiency
+                std::this_thread::sleep_for(std::chrono::milliseconds(400));
+            } });
+
+        // Enqueue mesh generation task
+        threadPool.enqueue([this]
                            {
-                                   removeUnneededChunkData(chunkPos);
-                                   activeTasks--; });
+            ChunkPos newPos;
 
-    threadPool.enqueue([this, chunkPos]
-                       {
-                               removeUnneededChunkMeshes(chunkPos);
-                               activeTasks--; });
+            while (true)
+            {
+                // Lock to safely read world position
+                {
+                    std::unique_lock<std::mutex> lock(pos_mtx);
+                    newPos = worldCurrPos;
+                }
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> elapsed = currentTime - startTime;
-    if (elapsed.count() > 0.5)
-    {
-        int test = 10;
+                bool hasChunksToMesh = false;
+
+                // Lock to safely check the chunk queue
+                {
+                    std::unique_lock<std::mutex> lock(mesh_queue_mtx);
+                    hasChunksToMesh = !chunksToMeshQueue.empty();
+                }
+
+                if (!hasChunksToMesh)
+                {
+                    addChunksToMeshQueue(newPos);
+                }
+
+                // Add a break condition or sleep for efficiency
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            } });
+
+        threadPool.enqueue([this]
+                           { while(true) {
+                            std::unique_lock<std::mutex> lock(mesh_queue_mtx);
+                                if (!chunksToMeshQueue.empty())
+                                {
+                                    lock.unlock();
+                                    generateNextMesh();
+                                }
+                                 } });
+
+        dataThreadPool.enqueue([this]
+                               {
+            ChunkPos newPos;
+            while (true)
+            {
+                // Lock to safely read world position
+                {
+                    std::unique_lock<std::mutex> lock(pos_mtx);
+                    newPos = worldCurrPos;
+                }
+
+                //if (newPos == currentPos) continue;
+                removeUnneededChunkData(newPos);
+
+                // Add a break condition or sleep for efficiency
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            } });
+
+        threadPool.enqueue([this]
+                           {
+            ChunkPos newPos;
+            while (true)
+            {
+                // Lock to safely read world position
+                {
+                    std::unique_lock<std::mutex> lock(pos_mtx);
+                    newPos = worldCurrPos;
+                }
+
+                //if (newPos == currentPos) continue;
+                removeUnneededChunkMeshes(newPos);
+
+                // Add a break condition or sleep for efficiency
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            } });
     }
-    // std::cout << "duration: " << elapsed.count() << std::endl;
 }
 
 void World::render()

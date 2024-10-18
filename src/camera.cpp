@@ -294,6 +294,9 @@ void Camera::tick(float currentTime)
     {
         cameraPos.y = 100.0f;
     }
+
+    std::lock_guard<std::mutex> lock(world->pos_mtx);
+    world->worldCurrPos = {(int)(cameraPos.x / CHUNK_SIZE), (int)(cameraPos.z / CHUNK_SIZE)};
 }
 
 void Camera::setForward(bool setter)

@@ -369,7 +369,6 @@ void World::removeUnneededChunkData(ChunkPos pos)
 
 void World::generateChunkDataFromPos(ChunkPos pos, bool initial = false)
 {
-
     int x = pos.x;
     int z = pos.z;
 

@@ -12,24 +12,27 @@
 class World
 {
 public:
-    World() : threadPool(1), dataThreadPool(1)
+    World() : threadPool(3), dataThreadPool(3)
     {
         focusMesh.setDepthTest(false);
         intialDataGenerated = false;
     }
 
     void init();
+    void startWorldGeneration();
 
-    void generateNewChunks(ChunkPos chunkPos);
     void render();
     BLOCK getBlockData(glm::ivec3 blockPos);
     void removeBlock(glm::ivec3 blockPos);
     void updateFocusBlock(glm::ivec3 &pos, char &face);
     bool intialDataGenerated;
+    ChunkPos worldCurrPos;
+    std::mutex pos_mtx;
 
 private:
     ThreadPool threadPool;
     ThreadPool dataThreadPool;
+    int chunkGenerationTries = 0;
 
     std::mutex data_mtx;
     ChunkDataMap chunkDataMap;
@@ -45,6 +48,8 @@ private:
 
     std::mutex struct_mtx;
     StructQueue structQueue;
+
+    std::mutex player_mtx;
 
     Mesh focusMesh;
 
