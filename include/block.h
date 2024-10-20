@@ -61,7 +61,7 @@ static std::unordered_map<BLOCK, std::vector<UVcoords>> blockTextureCoords = {
     {BLOCK::SNOW_BLOCK, {getTextureCoordsFromAtlas(0, 6), getTextureCoordsFromAtlas(0, 6), getTextureCoordsFromAtlas(0, 6)}},
     {BLOCK::WATER_BLOCK, {getTextureCoordsFromAtlas(0, 7)}},
     {BLOCK::SAND_BLOCK, {getTextureCoordsFromAtlas(0, 8), getTextureCoordsFromAtlas(0, 8), getTextureCoordsFromAtlas(0, 8)}},
-    {BLOCK::OAK_WOOD, {getTextureCoordsFromAtlas(0, 9), getTextureCoordsFromAtlas(0, 9), getTextureCoordsFromAtlas(0, 9)}},
+    {BLOCK::OAK_WOOD, {getTextureCoordsFromAtlas(0, 11), getTextureCoordsFromAtlas(0, 9), getTextureCoordsFromAtlas(0, 11)}},
     {BLOCK::OAK_LEAVES, {getTextureCoordsFromAtlas(0, 10), getTextureCoordsFromAtlas(0, 10), getTextureCoordsFromAtlas(0, 10)}},
 };
 
