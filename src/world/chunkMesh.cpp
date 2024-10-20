@@ -355,9 +355,9 @@ void World::renderChunkMeshes()
     }
 
     // Enable blending for transparency
-    // glDepthMask(GL_FALSE); // Disable depth writing for transparent blocks, but leave depth testing on
+    glDepthMask(GL_FALSE); // Disable depth writing for transparent blocks, but leave depth testing on
     glDisable(GL_CULL_FACE);
-    //  Render transparent chunks next
+    //   Render transparent chunks next
     for (auto &pair : chunkMeshMap)
     {
         ChunkMesh &chunk = pair.second;
@@ -375,7 +375,7 @@ void World::renderChunkMeshes()
 
     // Re-enable depth writing and disable blending
     glEnable(GL_CULL_FACE);
-    // glDepthMask(GL_TRUE);
+    glDepthMask(GL_TRUE);
 }
 
 bool World::chunkMeshExists(ChunkPos pos)
