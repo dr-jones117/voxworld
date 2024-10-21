@@ -29,7 +29,9 @@
 #include <chrono>
 #include <rendering.h>
 
-#define SHOW_FPS true
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 int screenWidth = 1280, screenHeight = 720;
 World *world = new World();
@@ -171,6 +173,20 @@ int main(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    // Set global scaling factor
+    io.FontGlobalScale = 1.75f; // Increase this value for larger scaling
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init();
+
     Shader shader = Shader("./res/shaders/object.shader");
     shader.useProgram();
 
@@ -188,6 +204,16 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
+        glfwPollEvents();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        // Create an ImGui window for displaying the FPS
+        ImGui::SetNextWindowSize(ImVec2(350.0f, 200.0f));
+        ImGui::Begin("Voxworld Alpha 0.0.1");
+        ImGui::Text("FPS: %.1f", fps); // Display the FPS
+        ImGui::End();
+
         if (!world->intialDataGenerated)
             continue;
 
@@ -232,24 +258,26 @@ int main(void)
 
         world->render();
 
+        // Rendering
+        // (Your code clears your framebuffer, renders your other stuff etc.)
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // (Your code calls glfwSwapBuffers() etc.)
+
         glfwSwapBuffers(window);
-        glfwPollEvents();
 
         // Calculate FPS
         auto currentTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> elapsed = currentTime - startTime;
 
         glm::vec3 playerPos = player->getPos();
-        // std::cout << "Chunk: (" << playerPos.x << ", " << playerPos.y << ", " << playerPos.z << ") " << std::endl;
-#if SHOW_FPS
+
         if (elapsed.count() >= 1.0f)
         {
             fps = frameCount / elapsed.count();
-            std::cout << "FPS: " << fps << std::endl;
             startTime = currentTime;
             frameCount = 0;
         }
-#endif
     }
 
     shader.deleteProgram();
@@ -257,6 +285,10 @@ int main(void)
     glfwDestroyWindow(window);
     delete player;
     delete world;
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
     exit(EXIT_SUCCESS);
