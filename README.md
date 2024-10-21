@@ -1,5 +1,5 @@
-# voxwrld
-Project by Jonah Morgan
+# Voxwrld
+Project by Jonah Allen Morgan
 
 ![voxwrld_a0 0 1](https://github.com/user-attachments/assets/22810576-e423-4894-93fe-85bbcda90403)
 I'm using minecrafts assets right now. I'll be switching to my own once I get further into the project.
